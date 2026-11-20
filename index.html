@@ -85,6 +85,13 @@ details.fold .inner{margin-top:12px}
 .duelbar.on{display:flex}
 .pl{flex:1;border-radius:12px;padding:8px;text-align:center;font-weight:700;background:#fff;color:#6b7280;border:3px solid transparent}
 .pl.act{border-color:#f59e0b;background:#fffbeb;color:#1f2937}
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+.zone{padding:12px;text-align:center;border:2px solid var(--soft);border-radius:12px;background:#f8fafc}
+.zone.current{border-color:#f59e0b;background:#fffbeb}
+.zone.done{border-color:#10b981;background:#ecfdf5}
+.zone.locked{opacity:.55}
+.zone .icon{font-size:34px}
+.zone button{margin-top:8px}
 #printArea{display:none}
 @media print{body{background:#fff;padding:0}.container,.overlay,.confetti{display:none!important}#printArea{display:block}.pagebreak{page-break-before:always}.pitem{margin:22px 0;font-size:20px}.psol{margin:12px 0;font-size:15px}.pline{display:inline-block;width:120px;border-bottom:1px solid #000;margin-left:12px}}
 </style>
@@ -128,6 +135,15 @@ details.fold .inner{margin-top:12px}
     <div class="box">Niv. <span id="lvl">1</span></div>
     <div class="box">🔥×<span id="mult">1</span></div>
     <div class="box">🏆 <span id="best">0</span></div>
+  </div>
+</div>
+
+<div class="card" id="mapCard">
+  <h2 class="center">🗺️ Carte d’aventure</h2>
+  <p class="center">Termine les combats d’une zone pour débloquer la suivante.</p>
+  <div class="map" id="map"></div>
+  <div class="center" style="margin-top:10px">
+    <button class="gold" onclick="startAdventure()">🧭 Commencer l’aventure</button>
   </div>
 </div>
 
@@ -219,7 +235,7 @@ details.fold .inner{margin-top:12px}
 
 <div class="overlay" id="ovLevel"><div class="modal">
   <div class="big">🎉</div><h2 id="ovLevelTitle"></h2><p id="ovLevelText"></p>
-  <button class="gold" onclick="closeOv('ovLevel');gameNext()">Continuer</button>
+  <button class="gold" id="levelContinueBtn" onclick="closeOv('ovLevel');gameNext()">Continuer</button>
 </div></div>
 
 <div class="overlay" id="ovEnd"><div class="modal">
@@ -243,118 +259,119 @@ const $=id=>document.getElementById(id);
 const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 const pick=a=>a[rnd(0,a.length-1)];
 const MINUS="−";
-const fmt=n=>n<0?MINUS+Math.abs(n):""+n;                 // affichage nombre
-const par=n=>n<0?`(${MINUS}${Math.abs(n)})`:`(+${n})`;    // (+5) ou (−5)
-const parNeg=n=>n<0?`(${MINUS}${Math.abs(n)})`:`${n}`;    // 5 ou (−5)
-const sgnWord=n=>n<0?"négatif":"positif";
+const fmt=n=>n<0?MINUS+Math.abs(n):""+n;                 
+const par=n=>n<0?`(${MINUS}${Math.abs(n)})`:`(+${n})`;    
+const parNeg=n=>n<0?`(${MINUS}${Math.abs(n)})`:`${n}`;    
 function maxVal(l){return l===1?9:l===2?20:50}
 function maxMul(l){return l===1?6:l===2?10:12}
-function rv(l,nz=true){let v=rnd(1,maxVal(l));return Math.random()<.5?-v:v}
+function rv(l){let v=rnd(1,maxVal(l));return Math.random()<.5?-v:v}
 function rm(l){let v=rnd(2,maxMul(l));return Math.random()<.5?-v:v}
 function effLevel(){
   const base=+$("level").value;
   if(mode==="game"&&$("autoLevel").checked)return Math.min(3,Math.max(base,game.level<=1?1:game.level<=3?2:3));
   return base;
 }
-const S=n=>n<0?MINUS+Math.abs(n):"+"+n; // avec signe explicite
-const eqLine=t=>[null,t];
+
+/* ================= Carte d'aventure ================= */
+const ZONES=[
+  {name:"Forêt des signes",icon:"🌲",category:"addsub"},
+  {name:"Grotte des parenthèses",icon:"🪨",category:"parent"},
+  {name:"Volcan des priorités",icon:"🌋",category:"chaine"}
+];
+let adventure=loadJ("rel_adventure",{unlocked:0,completed:[]});
+function saveAdventure(){saveJ("rel_adventure",adventure)}
+function renderMap(){
+  $("map").innerHTML=ZONES.map((zone,i)=>{
+    const done=adventure.completed.includes(i);
+    const unlocked=i<=adventure.unlocked;
+    const cls=done?"done":unlocked?"current":"locked";
+    const status=done?"✅ Terminée":unlocked?"🔓 Débloquée":"🔒 Verrouillée";
+    return `<div class="zone ${cls}"><div class="icon">${zone.icon}</div><b>${zone.name}</b><div>${status}</div>
+      ${unlocked&&!done?`<button onclick="startAdventure(${i})">Jouer</button>`:""}
+    </div>`;
+  }).join("");
+}
+function startAdventure(zoneIndex=adventure.unlocked){
+  if(zoneIndex>adventure.unlocked||adventure.completed.includes(zoneIndex))return;
+  $("category").value=ZONES[zoneIndex].category;
+  game={lives:3,score:0,level:1,inLevel:0,kills:0,streak:0,maxStreak:0,mult:1,bossClean:false,adventureZone:zoneIndex};
+  setMode("game");
+  $("hudCard").style.display="block";
+  $("best").textContent=getBest();
+  renderBadgeList("badgeList");
+  updateHud();
+  gameNext();
+}
 
 /* ================= Types d'exercices ================= */
 const TYPES=[
 {id:"add_same",name:"Addition (même signe)",cat:["add","addsub"],gen(l){
   const s=Math.random()<.5?-1:1;const a=s*rnd(1,maxVal(l)),b=s*rnd(1,maxVal(l));const r=a+b;
   return{latex:`${par(a)} + ${par(b)}`,res:r,steps:[
-   ["Les deux nombres ont le <b>même signe</b> ("+(s<0?"négatif":"positif")+") : on additionne les distances à zéro et on garde le signe.",null],
+   ["Les deux nombres ont le <b>même signe</b> : on additionne les distances à zéro et on garde le signe.",null],
    [null,`${par(a)} + ${par(b)} = ${s<0?MINUS:""}(${Math.abs(a)} + ${Math.abs(b)}) = ${fmt(r)}`]]}}},
 {id:"add_diff",name:"Addition (signes différents)",cat:["add","addsub"],gen(l){
   let a=rnd(1,maxVal(l)),b=rnd(1,maxVal(l));while(a===b)b=rnd(1,maxVal(l));
   if(Math.random()<.5)a=-a;else b=-b; if(Math.random()<.5){[a,b]=[b,a]}
   const r=a+b;const big=Math.abs(a)>Math.abs(b)?a:b;
   return{latex:`${par(a)} + ${par(b)}`,res:r,steps:[
-   ["Signes <b>différents</b> : on soustrait les distances à zéro ("+Math.max(Math.abs(a),Math.abs(b))+" − "+Math.min(Math.abs(a),Math.abs(b))+") et on garde le signe du nombre le plus « fort » ("+(big<0?"négatif":"positif")+").",null],
+   ["Signes <b>différents</b> : on soustrait les distances à zéro et on garde le signe du nombre le plus grand.",null],
    [null,`${par(a)} + ${par(b)} = ${fmt(r)}`]]}}},
 {id:"sub_simple",name:"Soustraction",cat:["sub","addsub"],gen(l){
   const a=rv(l),b=rv(l);const r=a-b;
   return{latex:`${par(a)} − ${par(b)}`,res:r,steps:[
-   ["Soustraire un nombre, c'est <b>ajouter son opposé</b> : l'opposé de "+fmt(b)+" est "+fmt(-b)+".",null],
+   ["Soustraire un nombre, c'est <b>ajouter son opposé</b>.",null],
    [null,`${par(a)} − ${par(b)} = ${par(a)} + ${par(-b)} = ${fmt(r)}`]]}}},
 {id:"addsub_chain",name:"Addition/soustraction à 3 termes",cat:["addsub","chaine"],gen(l){
   const a=rv(l),b=rv(l),c=rv(l);const o1=Math.random()<.5?"+":"−",o2=Math.random()<.5?"+":"−";
   const t1=o1==="+"?b:-b,t2=o2==="+"?c:-c;const r=a+t1+t2;
   return{latex:`${par(a)} ${o1} ${par(b)} ${o2} ${par(c)}`,res:r,steps:[
    ["On transforme chaque soustraction en addition de l'opposé :",null],
-   [null,`${par(a)} + ${par(t1)} + ${par(t2)}`],
-   ["On calcule de gauche à droite :",null],
-   [null,`${par(a)} + ${par(t1)} = ${par(a+t1)}, puis ${par(a+t1)} + ${par(t2)} = ${fmt(r)}`]]}}},
+   [null,`${par(a)} + ${par(t1)} + ${par(t2)} = ${fmt(r)}`]]}}},
 {id:"suppr_par",name:"Suppression de parenthèses",cat:["addsub","parent"],gen(l){
-  const a=rv(l),b=rv(l),c=rv(l);const o1=Math.random()<.5?"+":"−",o2=Math.random()<.5?"+":"−";
-  const A=Math.abs(a),B=Math.abs(b),C=Math.abs(c);
-  const w=(o,x)=>`${o} (${x<0?MINUS:"+"}${Math.abs(x)})`;
-  const t1=o1==="+"?b:-b,t2=o2==="+"?c:-c;const r=a+t1+t2;
-  const simp=n=>(n<0?"− ":"+ ");
-  return{latex:`${fmt(a)} ${o1} (${b<0?MINUS:"+"}${B}) ${o2} (${c<0?MINUS:"+"}${C})`,res:r,steps:[
-   ["Règle : « + ( + » donne +, « + ( − » donne −, « − ( + » donne −, « − ( − » donne +.",null],
-   [null,`${fmt(a)} ${simp(t1)}${Math.abs(t1)} ${simp(t2)}${Math.abs(t2)} = ${fmt(r)}`]]}}},
+  const a=rv(l),b=rv(l);const r=a+b;
+  return{latex:`${fmt(a)} + (${fmt(b)})`,res:r,steps:[
+   ["Règle de suppression des parenthèses :",null],
+   [null,`${fmt(a)} + (${fmt(b)}) = ${fmt(r)}`]]}}},
 {id:"mul",name:"Multiplication",cat:["mul"],gen(l){
   const a=rm(l),b=rm(l);const r=a*b;
   return{latex:`${parNeg(a)} × ${parNeg(b)}`,res:r,steps:[
-   [(a<0)===(b<0)?"Les deux nombres ont le <b>même signe</b> : le produit est <b>positif</b>.":"Les signes sont <b>différents</b> : le produit est <b>négatif</b>.",null],
-   [null,`${parNeg(a)} × ${parNeg(b)} = ${fmt(r)}  (${Math.abs(a)} × ${Math.abs(b)} = ${Math.abs(r)})`]]}}},
+   [(a<0)===(b<0)?"Même signe : le produit est <b>positif</b>.":"Signes différents : le produit est <b>négatif</b>.",null],
+   [null,`${parNeg(a)} × ${parNeg(b)} = ${fmt(r)}`]]}}},
 {id:"mul3",name:"Produit de trois facteurs",cat:["mul","chaine"],gen(l){
   const a=rm(Math.min(l,2)),b=rm(Math.min(l,2)),c=rm(Math.min(l,2));const r=a*b*c;
   const neg=[a,b,c].filter(x=>x<0).length;
   return{latex:`${parNeg(a)} × ${parNeg(b)} × ${parNeg(c)}`,res:r,steps:[
-   [`Il y a ${neg} facteur${neg>1?"s":""} négatif${neg>1?"s":""} (${neg%2===0?"pair":"impair"}) : le résultat est <b>${neg%2===0?"positif":"négatif"}</b>.`,null],
-   [null,`${Math.abs(a)} × ${Math.abs(b)} × ${Math.abs(c)} = ${Math.abs(r)}, donc le résultat est ${fmt(r)}`]]}}},
+   [`Il y a ${neg} facteur${neg>1?"s":""} négatif${neg>1?"s":""} : le résultat est <b>${neg%2===0?"positif":"négatif"}</b>.`,null],
+   [null,`Résultat : ${fmt(r)}`]]}}},
 {id:"div",name:"Division",cat:["div"],gen(l){
   const b=rm(l),q=rm(l);const a=b*q;
   return{latex:`${parNeg(a)} ÷ ${parNeg(b)}`,res:q,steps:[
    [(a<0)===(b<0)?"Même signe : le quotient est <b>positif</b>.":"Signes différents : le quotient est <b>négatif</b>.",null],
-   [null,`${parNeg(a)} ÷ ${parNeg(b)} = ${fmt(q)}  (${Math.abs(a)} ÷ ${Math.abs(b)} = ${Math.abs(q)})`]]}}},
+   [null,`${parNeg(a)} ÷ ${parNeg(b)} = ${fmt(q)}`]]}}},
 {id:"prio1",name:"Priorités (a + b × c)",cat:["chaine","mul"],gen(l){
   const a=rv(l),b=rm(Math.min(l,2)),c=rm(Math.min(l,2));const r=a+b*c;
   return{latex:`${fmt(a)} + ${parNeg(b)} × ${parNeg(c)}`,res:r,steps:[
    ["La multiplication est prioritaire :",null],
-   [null,`${parNeg(b)} × ${parNeg(c)} = ${fmt(b*c)}`],
-   ["Puis l'addition :",null],
    [null,`${fmt(a)} + ${par(b*c)} = ${fmt(r)}`]]}}},
 {id:"prio2",name:"Priorités (a × b − c)",cat:["chaine","mul","sub"],gen(l){
   const a=rm(Math.min(l,2)),b=rm(Math.min(l,2)),c=rv(l);const r=a*b-c;
   return{latex:`${parNeg(a)} × ${parNeg(b)} − ${parNeg(c)}`,res:r,steps:[
    ["La multiplication d'abord :",null],
-   [null,`${parNeg(a)} × ${parNeg(b)} = ${fmt(a*b)}`],
-   ["Puis la soustraction (on ajoute l'opposé) :",null],
-   [null,`${fmt(a*b)} − ${par(c)} = ${fmt(a*b)} + ${par(-c)} = ${fmt(r)}`]]}}},
+   [null,`${fmt(a*b)} − ${par(c)} = ${fmt(r)}`]]}}},
 {id:"par_mul",name:"Parenthèses × nombre",cat:["parent","chaine"],gen(l){
   const a=rv(l),b=rv(l),c=rm(Math.min(l,2));const r=(a+b)*c;
   return{latex:`(${fmt(a)} + ${parNeg(b)}) × ${parNeg(c)}`,res:r,steps:[
    ["On calcule d'abord les parenthèses :",null],
-   [null,`${fmt(a)} + ${parNeg(b)} = ${fmt(a+b)}`],
-   ["Puis on multiplie :",null],
-   [null,`${parNeg(a+b)} × ${parNeg(c)} = ${fmt(r)}`]]}}},
-{id:"par_div",name:"Fraction d'entiers relatifs",cat:["parent","div","chaine"],gen(l){
-  const c=rm(Math.min(l,2)),q=rm(Math.min(l,2));const s=c*q;const a=rv(l);let b=s-a; if(b===0){b=1}
-  const sum=a+b,d=rm(Math.min(l,2));const num=sum*d; // (a+b)=sum ; on construit (a+b) ÷ d
-  const r=Math.trunc(sum/ (sum%d===0?d:1)); // sécurité
-  const val=sum%d===0?sum/d:null;
-  if(val===null){const dd=rm(Math.min(l,2));const nn=dd*q;const x=rv(l);const y=nn-x;
-    return{latex:`(${fmt(x)} + ${parNeg(y)}) ÷ ${parNeg(dd)}`,res:q,steps:[
-    ["Parenthèses d'abord :",null],[null,`${fmt(x)} + ${parNeg(y)} = ${fmt(nn)}`],
-    ["Puis la division :",null],[null,`${parNeg(nn)} ÷ ${parNeg(dd)} = ${fmt(q)}`]]}}
-  return{latex:`(${fmt(a)} + ${parNeg(b)}) ÷ ${parNeg(d)}`,res:val,steps:[
-    ["Parenthèses d'abord :",null],[null,`${fmt(a)} + ${parNeg(b)} = ${fmt(sum)}`],
-    ["Puis la division :",null],[null,`${parNeg(sum)} ÷ ${parNeg(d)} = ${fmt(val)}`]]}}},
+   [null,`${fmt(a+b)} × ${parNeg(c)} = ${fmt(r)}`]]}}},
+{id:"par_div",name:"Division avec parenthèses",cat:["parent","div","chaine"],gen(l){
+  const d=rm(Math.min(l,2)),q=rm(Math.min(l,2)),sum=d*q,a=rv(l),b=sum-a;
+  return{latex:`(${fmt(a)} + (${fmt(b)})) ÷ ${parNeg(d)}`,res:q,steps:[
+    ["Parenthèses d'abord :",null],[null,`${sum} ÷ ${parNeg(d)} = ${fmt(q)}`]]}}},
 {id:"problem",name:"Problèmes",cat:["probleme"],gen(l){
-  const k=rnd(0,2);
-  if(k===0){const t=rnd(1,Math.min(15,maxVal(l)+3)),d=rnd(t+1,t+15);
-    return{statement:`Il fait ${t} °C à midi. La température baisse de ${d} °C pendant la nuit. Quelle est la température (en °C) ?`,latex:`${t} − ${d}`,res:t-d,
-    steps:[["On soustrait la baisse :",null],[null,`${t} − ${d} = ${fmt(t-d)}`]]}}
-  if(k===1){const a=rnd(1,5)*(Math.random()<.5?-1:1)*rnd(1,3),n=rnd(2,6);
-    return{statement:`Un plongeur est à ${fmt(-rnd(5,5))} m. Il descend de ${n} m par minute pendant 3 minutes. Calcule son altitude finale (en m).`,latex:`−5 − 3 × ${n}`,res:-5-3*n,
-    steps:[["On calcule d'abord la descente :",null],[null,`3 × ${n} = ${3*n}`],["Puis on ajoute à l'altitude :",null],[null,`−5 − ${3*n} = ${fmt(-5-3*n)}`]]}}
-  const gain=rnd(2,9),perte=rnd(2,9),n1=rnd(2,5),n2=rnd(2,5);const r=gain*n1-perte*n2;
-  return{statement:`Un joueur gagne ${gain} points à chaque bonne réponse (${n1} réponses) et perd ${perte} points à chaque mauvaise (${n2} réponses). Quel est son score final ?`,latex:`${gain} × ${n1} − ${perte} × ${n2}`,res:r,
-  steps:[["On calcule les gains et les pertes :",null],[null,`${gain} × ${n1} = ${gain*n1}  et  ${perte} × ${n2} = ${perte*n2}`],[null,`${gain*n1} − ${perte*n2} = ${fmt(r)}`]]}}}
+  const t=rnd(1,10),d=rnd(t+1,t+15);
+  return{statement:`Il fait ${t} °C à midi. La température baisse de ${d} °C pendant la nuit. Quelle est la température finale ?`,latex:`${t} − ${d}`,res:t-d,
+  steps:[["On soustrait la baisse :",null],[null,`${t} − ${d} = ${fmt(t-d)}`]]}}}
 ];
 const BOSS_TYPES=["prio1","prio2","par_mul","par_div","mul3","addsub_chain","suppr_par"];
 
@@ -369,10 +386,9 @@ function renderStats(){
   const rows=TYPES.map(t=>{const s=stats[t.id];const n=s?s.ok+s.ko:0;const pct=n?Math.round(s.ok/n*100):0;const avg=n?Math.round(s.t/n):0;
     const col=pct>=80?"#10b981":pct>=50?"#f59e0b":"#ef4444";
     return`<div class="srow"><div class="nm">${t.name}</div><div class="pb"><div class="pf" style="width:${n?pct:0}%;background:${col}"></div></div><div class="pv">${n?pct+"% · "+n+" · "+avg+"s":"—"}</div></div>`}).join("");
-  const weak=TYPES.filter(t=>stats[t.id]&&stats[t.id].recent.length>=3).map(t=>({t,w:weight(t.id)})).sort((a,b)=>b.w-a.w).slice(0,2).filter(x=>x.w>=4);
-  $("statsBox").innerHTML=rows+(weak.length?`<p style="margin-top:10px">🎯 <b>À travailler :</b> ${weak.map(x=>x.t.name).join(", ")}</p>`:"<p style='color:#6b7280;font-size:13px'>Réussite · nombre · temps moyen par exercice.</p>");
+  $("statsBox").innerHTML=rows+"<p style='color:#6b7280;font-size:13px;margin-top:8px'>Réussite · nombre · temps moyen par exercice.</p>";
 }
-function resetAll(){if(confirm("Effacer statistiques, pièces, boutique et badges ?")){["rel_stats","rel_wallet","rel_badges","rel_best"].forEach(k=>localStorage.removeItem(k));location.reload()}}
+function resetAll(){if(confirm("Effacer statistiques, pièces, boutique et badges ?")){["rel_stats","rel_wallet","rel_badges","rel_best","rel_adventure"].forEach(k=>localStorage.removeItem(k));location.reload()}}
 
 function activeTypes(){const c=$("category").value;return c==="all"?TYPES.filter(t=>t.id!=="problem"):TYPES.filter(t=>t.cat.includes(c))}
 function generateExercise(level,boss){
@@ -389,13 +405,11 @@ const SHOP=[
  {id:"m_wiz",kind:"skin",ic:"🧙",name:"Sorcier",price:30,set:["🧙","🧚","🧞"]},
  {id:"m_ani",kind:"skin",ic:"🦊",name:"Animaux",price:40,set:["🦊","🐻","🐺","🦁"]},
  {id:"m_rob",kind:"skin",ic:"🤖",name:"Robots",price:50,set:["🤖","👾","🛸","📡"]},
- {id:"m_sea",kind:"skin",ic:"🦑",name:"Océan",price:60,set:["🦑","🐙","🦈","🐊"]},
  {id:"t_forest",kind:"theme",ic:"🌲",name:"Thème Forêt",price:40,theme:"th-forest"},
  {id:"t_volcano",kind:"theme",ic:"🌋",name:"Thème Volcan",price:60,theme:"th-volcano"},
  {id:"t_space",kind:"theme",ic:"🚀",name:"Thème Espace",price:80,theme:"th-space"},
  {id:"ti_1",kind:"title",ic:"🎖️",name:"Apprenti",price:20,title:"Apprenti"},
- {id:"ti_2",kind:"title",ic:"🛡️",name:"Chevalier des relatifs",price:70,title:"Chevalier des relatifs"},
- {id:"ti_3",kind:"title",ic:"👑",name:"Maître des signes",price:120,title:"Maître des signes"}
+ {id:"ti_2",kind:"title",ic:"👑",name:"Maître des signes",price:100,title:"Maître des signes"}
 ];
 let wallet=loadJ("rel_wallet",{coins:0,owned:{},skin:null,theme:null,title:null});
 function saveWallet(){saveJ("rel_wallet",wallet)}
@@ -434,6 +448,7 @@ function padKey(k){
   else if(k==="C")el.value="";
   else if(k==="−")el.value=el.value.startsWith(MINUS)?el.value.slice(1):MINUS+el.value;
   else if(el.value.replace(MINUS,"").length<5)el.value+=k;
+  if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
   sfx("click");
 }
 function applyPad(){const on=$("usePad").checked;$("pad").classList.toggle("on",on);const e=$("ans");e.readOnly=on;e.setAttribute("inputmode",on?"none":"text")}
@@ -457,12 +472,14 @@ const BADGES=[
 ];
 const getBest=()=>+(localStorage.getItem("rel_best")||0);
 function renderBadgeList(id,only){const o=loadJ("rel_badges",{});const el=$(id);if(!el)return;
- el.innerHTML=BADGES.filter(b=>!only||only.includes(b.id)).map(b=>`<span class="badge ${o[b.id]?"":"locked"}">${b.ico} ${b.name}</span>`).join("")}function checkBadges(){const o=loadJ("rel_badges",{});const fresh=[];
+ el.innerHTML=BADGES.filter(b=>!only||only.includes(b.id)).map(b=>`<span class="badge ${o[b.id]?"":"locked"}">${b.ico} ${b.name}</span>`).join("")}
+function checkBadges(){const o=loadJ("rel_badges",{});const fresh=[];
  BADGES.forEach(b=>{if(!o[b.id]&&b.test(game)){o[b.id]=true;fresh.push(b.id)}});
  if(fresh.length)saveJ("rel_badges",o);renderBadgeList("badgeList");return fresh}
 function closeOv(id){$(id).classList.remove("on")}
 function openStart(){$("ovStart").classList.add("on")}
 function skinSet(){const it=wallet.skin&&SHOP.find(s=>s.id===wallet.skin);return it?it.set:MONSTERS}
+
 function setMode(m){
   mode=m;clearInterval(gameTimerId);clearInterval(timerId);timedMode=false;
   const g=m==="game",d=m==="duel";
@@ -526,6 +543,7 @@ function loseLife(){
   const mo=$("monster");mo.classList.remove("appear");mo.classList.add("shake");setTimeout(()=>mo.classList.remove("shake"),500);sfx("lose");
 }
 function afterWrong(){if(!game)return;if(game.lives<=0){endGame();return}gameNext()}
+
 function victory(){
   const boss=isBossTurn();const gain=Math.max(1,(boss?50:10)*game.mult-hintPenalty);
   game.score+=gain;game.kills++;game.streak++;game.maxStreak=Math.max(game.maxStreak,game.streak);
@@ -536,15 +554,33 @@ function victory(){
   $("hpfill").style.width="0%";sfx(boss?"boss":"win");if(boss)confetti(60);
   if(game.score>getBest()){localStorage.setItem("rel_best",game.score);$("best").textContent=game.score}
   checkBadges();game.inLevel++;
+  
   if(game.inLevel>=PER_LEVEL){
-    game.inLevel=0;game.level++;updateHud();checkBadges();
+    game.inLevel=0;
+    if(Number.isInteger(game.adventureZone)){
+      const zone=game.adventureZone;
+      adventure.completed.push(zone);
+      adventure.unlocked=Math.min(ZONES.length-1,zone+1);
+      saveAdventure();renderMap();
+      const reward=20+zone*10;addCoins(reward);
+      $("ovLevelTitle").textContent="Zone terminée !";
+      $("ovLevelText").innerHTML=`🎉 ${ZONES[zone].name} est terminée !<br>Récompense : <b>${reward} pièces</b> 🪙`;
+      $("levelContinueBtn").textContent="Retour à la carte";
+      $("levelContinueBtn").onclick=()=>{closeOv("ovLevel");setMode("train");renderMap()};
+      setTimeout(()=>$("ovLevel").classList.add("on"),700);
+      return;
+    }
+    game.level++;updateHud();checkBadges();
     setTimeout(()=>{sfx("level");confetti(40);
       $("ovLevelTitle").textContent="Niveau "+game.level+" !";
       $("ovLevelText").innerHTML="Boss vaincu ! Les monstres deviennent plus costauds…"+(game.lives<3?"<br>+1 ❤️ offert !":"");
       if(game.lives<3){game.lives++;updateHud()}
+      $("levelContinueBtn").textContent="Continuer";
+      $("levelContinueBtn").onclick=()=>{closeOv("ovLevel");gameNext()};
       $("ovLevel").classList.add("on")},900);
   }else setTimeout(gameNext,1100);
 }
+
 function endGame(){
   clearInterval(gameTimerId);sfx("over");const best=getBest();const fresh=checkBadges();
   $("endIcon").textContent="💀";$("endTitle").textContent="Game Over";
@@ -614,6 +650,7 @@ function solutionHTML(){
 }
 function show(cls,html){const fb=$("feedback");fb.className="feedback "+cls;fb.innerHTML=html;fb.style.display="block"}
 function parseI(s){s=s.trim().replace(/[−–—]/g,"-").replace(/\s+/g,"").replace(/^\+/,"");return /^-?\d+$/.test(s)?parseInt(s,10):NaN}
+
 function check(){
   if(!current||answered)return;
   if(timedMode&&timeLeft<=0)return;
@@ -642,6 +679,7 @@ function check(){
   }
   renderStats();
 }
+
 /* ===== Défi 60 s ===== */
 let timerId=null,timeLeft=0,timedMode=false;
 function startTimed(){
@@ -676,8 +714,16 @@ function makePdf(){
 /* ===== Événements ===== */
 document.addEventListener("keydown",e=>{
   if(document.querySelector(".overlay.on"))return;
-  if(["SELECT","BUTTON"].includes(document.activeElement.tagName))return;
-  if(e.key==="Enter"){if(!answered)check();else if(mode==="train")newExercise()}
+  const tag=document.activeElement.tagName;
+  if(tag==="SELECT"||(tag==="INPUT"&&document.activeElement.type!=="text"))return;
+  if(e.key==="Enter"){
+    e.preventDefault();
+    if(!answered){check();return}
+    if(mode==="train"){newExercise();return}
+    const b=document.querySelector("#feedback button");
+    if(b)b.click();
+    return;
+  }
   if($("usePad").checked){
     if(/^[0-9]$/.test(e.key))padKey(e.key);
     else if(e.key==="Backspace")padKey("⌫");
@@ -689,11 +735,13 @@ document.addEventListener("keydown",e=>{
 $("useTimer").addEventListener("change",()=>{
   $("timeWrap").style.display=((mode==="game"||mode==="duel")&&$("useTimer").checked)?"block":"none";
   if((mode==="game"||mode==="duel")&&!answered)startMonsterTimer()});
+
 window.addEventListener("load",()=>{
   soundOn=localStorage.getItem("rel_sound")!=="0";
   $("soundBtn").textContent=soundOn?"🔊":"🔇";
   $("best").textContent=getBest();
   applyTheme();applyPad();updateCoins();renderShop();renderStats();renderBadgeList("badgeList");
+  renderMap();
   setMode("train");
 });
 </script>
