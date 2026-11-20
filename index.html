@@ -156,8 +156,7 @@ details.fold .inner{margin-top:12px}
 
   <div class="row" style="margin-top:12px">
     <button class="secondary" id="btnHint" onclick="hint()">💡 Indice (−5)</button>
-    <button class="secondary" id="btnSol" onclick="showSolution()">Solution</button>
-    <button class="secondary" id="btnNext" onclick="nextClick()">Suivant ➜</button>
+    <button class="secondary" id="btnNext" onclick="nextClick()" style="display:none">Suivant ➜</button>
   </div>
   <div class="feedback" id="feedback"></div>
   <div class="center" id="timer" style="font-size:20px;font-weight:bold;color:var(--accent2);margin-top:8px"></div>
@@ -470,8 +469,7 @@ function setMode(m){
   $("hudCard").style.display=g?"block":"none";
   $("duelbar").classList.toggle("on",d);
   $("btnHint").style.display=(g||d)?"":"none";
-  $("btnSol").style.display=(g||d)?"none":"";
-  $("btnNext").style.display=(g||d)?"none":"";
+  $("btnNext").style.display="none";
   $("hpbar").style.display=(g||d)?"block":"none";
   $("timeWrap").style.display=((g||d)&&$("useTimer").checked)?"block":"none";
   $("timer").textContent="";
@@ -594,7 +592,7 @@ function hint(){
   const first=current.steps.find(s=>s[0]);
   show("partial","💡 Indice (−5 points) :"+(first?`<span class="step">${first[0]}</span>`:"Pense aux signes et aux priorités de calcul."));
 }
-function nextClick(){if(mode==="train")newExercise()}
+function nextClick(){if(mode==="train"&&answered)newExercise()}
 
 /* ===== Interface ===== */
 function newExercise(boss){
@@ -607,6 +605,7 @@ function newExercise(boss){
   $("typeTag").textContent=boss===true?"👑 Boss":(t?t.name:"Calcul");
   $("ans").value="";
   $("feedback").style.display="none";answered=false;startTs=Date.now();
+  $("btnNext").style.display="none";
   if(!$("usePad").checked)$("ans").focus();
 }
 function solutionHTML(){
@@ -632,23 +631,17 @@ function check(){
       show("ok","✅ Bravo ! +"+gain+" points."+sol+`<div class="center"><button onclick="duelNext()">Joueur suivant ➜</button></div>`);
     }else{
       show("ok","✅ Bravo !"+sol);sfx("win");
-      if(timedMode)setTimeout(()=>newExercise(),700);
+      if(timedMode)setTimeout(()=>newExercise(),700);else $("btnNext").style.display="";
     }
   }else{
     answered=true;total++;clearInterval(gameTimerId);recStat(current.typeId,false,secs);
     const sh=(u===-current.res&&current.res!==0)?" Attention : le signe est faux.":"";
     if(mode==="game"){loseLife();show("ko","💥 Le monstre t'a touché ! −1 ❤️."+sh+sol+`<div class="center"><button onclick="afterWrong()">Continuer ➜</button></div>`)}
     else if(mode==="duel"){sfx("lose");show("ko","❌ Raté !"+sh+sol+`<div class="center"><button onclick="duelNext()">Joueur suivant ➜</button></div>`)}
-    else{show("ko","❌ Pas la bonne réponse."+sh+sol);sfx("lose");if(timedMode)setTimeout(()=>newExercise(),1500)}
+    else{show("ko","❌ Pas la bonne réponse."+sh+sol);sfx("lose");if(timedMode)setTimeout(()=>newExercise(),1500);else $("btnNext").style.display="";}
   }
   renderStats();
 }
-function showSolution(){
-  if(!current||mode!=="train")return;
-  if(!answered){answered=true;total++;recStat(current.typeId,false,Math.round((Date.now()-startTs)/1000));renderStats()}
-  show("partial","💡 Solution :"+solutionHTML());
-}
-
 /* ===== Défi 60 s ===== */
 let timerId=null,timeLeft=0,timedMode=false;
 function startTimed(){
