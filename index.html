@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Chasseur de monstres des relatifs</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg1:#1e1b4b;--bg2:#4338ca;--accent:#4f46e5;--accent2:#3730a3;--soft:#e0e7ff}
+body{font-family:"Segoe UI",Arial,sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));min-height:100vh;margin:0;padding:12px;color:#1f2937}
+body.th-forest{--bg1:#052e16;--bg2:#15803d;--accent:#059669;--accent2:#065f46;--soft:#d1fae5}
+body.th-volcano{--bg1:#450a0a;--bg2:#c2410c;--accent:#dc2626;--accent2:#7f1d1d;--soft:#fee2e2}
+body.th-space{--bg1:#020617;--bg2:#1e3a8a;--accent:#2563eb;--accent2:#1e3a8a;--soft:#dbeafe}
+.container{max-width:760px;margin:auto}
+h1{text-align:center;color:#fde68a;margin:0 0 10px;font-size:22px}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 4px 14px rgba(0,0,0,.25);position:relative}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+select,button,input[type=number],input[type=text]{font-size:15px;padding:8px 12px;border-radius:8px;border:1px solid #c7d2fe}
+button{background:var(--accent);color:#fff;border:none;cursor:pointer;transition:transform .08s}
+button:active{transform:scale(.95)}
+button.secondary{background:var(--soft);color:var(--accent2)}
+button.gold{background:#f59e0b;color:#1f2937;font-weight:700}
+button.green{background:#059669}
+button:disabled{opacity:.45}
+.exercise{font-size:34px;text-align:center;padding:10px 0;overflow-x:auto;font-weight:600}
+.statement{text-align:center;color:#4b5563;font-size:15px}
+.answer{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:8px;font-size:30px}
+.answer input{width:150px;font-size:26px;text-align:center;padding:6px;border:3px solid var(--accent);border-radius:8px;background:#f5f3ff}
+.feedback{margin-top:10px;padding:12px;border-radius:8px;display:none;line-height:1.9;overflow-x:auto}
+.ok{background:#dcfce7;color:#166534}.ko{background:#fee2e2;color:#991b1b}.partial{background:#fef3c7;color:#92400e}
+.step{display:block;margin:5px 0}
+.tag{display:inline-block;background:var(--soft);color:var(--accent2);border-radius:20px;padding:2px 12px;font-size:13px}
+.center{text-align:center}
+label{font-size:14px}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
+.hud .box{background:var(--soft);border-radius:10px;padding:5px 10px;font-weight:700;color:var(--accent2);font-size:14px;white-space:nowrap}
+.topline{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.arena{text-align:center;padding:2px 0 8px;border-bottom:2px dashed var(--soft);margin-bottom:8px}
+.monster{font-size:72px;line-height:1.1;display:inline-block;user-select:none}
+.monster.boss{font-size:92px;filter:drop-shadow(0 0 12px #f59e0b);animation:pulse 1.2s infinite}
+.monster.hit{animation:boom .6s forwards}.monster.shake{animation:shake .45s}.monster.appear{animation:pop .35s}
+.mname{font-weight:700;color:var(--accent2);font-size:15px}
+.hpbar{width:70%;max-width:360px;height:12px;background:#e5e7eb;border-radius:10px;margin:6px auto 0;overflow:hidden;border:2px solid #1f2937}
+.hpfill{height:100%;width:100%;background:linear-gradient(90deg,#ef4444,#f59e0b);transition:width .4s}
+.timebar{width:70%;max-width:360px;height:8px;background:#e5e7eb;border-radius:10px;margin:6px auto 0;overflow:hidden}
+.timefill{height:100%;width:100%;background:#10b981;transition:width 1s linear,background .3s}
+.timelabel{font-size:12px;color:#6b7280}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-14px)}50%{transform:translateX(14px)}75%{transform:translateX(-8px)}}
+@keyframes boom{0%{transform:scale(1)}40%{transform:scale(1.5) rotate(15deg)}100%{transform:scale(0) rotate(180deg);opacity:0}}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+.floating{position:absolute;left:50%;top:30px;transform:translateX(-50%);font-size:26px;font-weight:800;color:#059669;pointer-events:none;animation:floatup 1.1s forwards;text-shadow:0 2px 0 #fff}
+@keyframes floatup{0%{opacity:1}100%{opacity:0;transform:translate(-50%,-60px)}}
+.overlay{position:fixed;inset:0;background:rgba(15,10,60,.88);display:none;align-items:center;justify-content:center;z-index:50;padding:14px;overflow-y:auto}
+.overlay.on{display:flex}
+.modal{background:#fff;border-radius:18px;padding:20px;max-width:520px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.5);max-height:94vh;overflow-y:auto}
+.modal h2{margin:0 0 8px;color:var(--accent2)}
+.modal .big{font-size:56px}
+.modal p{color:#4b5563;line-height:1.5}
+.badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0}
+.badge{background:#fef3c7;border-radius:20px;padding:4px 12px;font-size:14px;font-weight:600;color:#92400e}
+.badge.locked{background:#f3f4f6;color:#9ca3af;filter:grayscale(1)}
+.confetti{position:fixed;top:-20px;font-size:22px;pointer-events:none;z-index:60;animation:fall 2.2s linear forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg)}}
+details.fold{background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:12px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+details.fold summary{cursor:pointer;font-weight:600;color:var(--accent2)}
+details.fold .inner{margin-top:12px}
+.rule{background:#f5f3ff;padding:10px;border-radius:8px;margin:8px 0;line-height:1.8}
+.pad{display:none;grid-template-columns:repeat(4,1fr);gap:6px;max-width:340px;margin:12px auto 0}
+.pad.on{display:grid}
+.pad button{font-size:22px;padding:12px 0;background:var(--soft);color:var(--accent2);font-weight:700;border-radius:10px}
+.pad button.act{background:var(--accent);color:#fff}
+.pad button.wide{grid-column:span 2}
+.srow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}
+.srow .nm{width:42%;text-align:left}
+.srow .pb{flex:1;height:14px;background:#e5e7eb;border-radius:8px;overflow:hidden}
+.srow .pf{height:100%;background:#10b981}
+.srow .pv{width:90px;text-align:right;font-size:12px;color:#6b7280}
+.shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:8px}
+.item{border:2px solid var(--soft);border-radius:12px;padding:8px;text-align:center;font-size:13px}
+.item.eq{border-color:#f59e0b;background:#fffbeb}
+.item .ic{font-size:34px}
+.item button{margin-top:4px;padding:4px 8px;font-size:12px}
+.duelbar{display:none;gap:8px;margin-bottom:10px}
+.duelbar.on{display:flex}
+.pl{flex:1;border-radius:12px;padding:8px;text-align:center;font-weight:700;background:#fff;color:#6b7280;border:3px solid transparent}
+.pl.act{border-color:#f59e0b;background:#fffbeb;color:#1f2937}
+#printArea{display:none}
+@media print{body{background:#fff;padding:0}.container,.overlay,.confetti{display:none!important}#printArea{display:block}.pagebreak{page-break-before:always}.pitem{margin:22px 0;font-size:20px}.psol{margin:12px 0;font-size:15px}.pline{display:inline-block;width:120px;border-bottom:1px solid #000;margin-left:12px}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>👾 Chasseur de monstres des relatifs</h1>
+
+<div class="topline">
+  <div class="card" style="margin:0;padding:8px 12px;flex:1;min-width:200px">
+    <label>Catégorie :
+      <select id="category">
+        <option value="all">Tous les types</option>
+        <option value="add">Additions</option>
+        <option value="sub">Soustractions</option>
+        <option value="addsub">Additions et soustractions</option>
+        <option value="mul">Multiplications</option>
+        <option value="div">Divisions</option>
+        <option value="chaine">Enchaînements</option>
+        <option value="parent">Avec parenthèses</option>
+        <option value="probleme">Problèmes</option>
+      </select>
+    </label>
+  </div>
+  <button class="gold" onclick="openStart()">🎮 Partie solo</button>
+  <button class="gold" onclick="startDuel()">⚔️ Duel</button>
+  <button class="secondary" onclick="setMode('train')">🧘 Entraînement</button>
+  <button class="secondary" id="soundBtn" onclick="toggleSound()">🔊</button>
+</div>
+
+<div class="duelbar" id="duelbar">
+  <div class="pl" id="pl1">Joueur 1 · <span id="pts1">0</span> ⭐</div>
+  <div class="pl" id="pl2">Joueur 2 · <span id="pts2">0</span> ⭐</div>
+</div>
+
+<div class="card" id="hudCard" style="display:none">
+  <div class="hud">
+    <div class="box" id="hearts">❤️❤️❤️</div>
+    <div class="box">⭐ <span id="score">0</span></div>
+    <div class="box">🪙 <span id="coins">0</span></div>
+    <div class="box">Niv. <span id="lvl">1</span></div>
+    <div class="box">🔥×<span id="mult">1</span></div>
+    <div class="box">🏆 <span id="best">0</span></div>
+  </div>
+</div>
+
+<div class="card" id="mainCard">
+  <div class="arena">
+    <div class="monster" id="monster">👾</div>
+    <div class="mname" id="mname"></div>
+    <div class="hpbar" id="hpbar"><div class="hpfill" id="hpfill"></div></div>
+    <div id="timeWrap"><div class="timebar"><div class="timefill" id="timefill"></div></div><div class="timelabel" id="timelabel"></div></div>
+  </div>
+  <div class="center"><span class="tag" id="typeTag"></span></div>
+  <div class="statement" id="statement"></div>
+  <div class="exercise" id="exercise"></div>
+
+  <div class="answer">
+    <span>=</span>
+    <input type="text" id="ans" inputmode="none" placeholder="?" readonly>
+  </div>
+
+  <div class="pad on" id="pad">
+    <button onclick="padKey('7')">7</button><button onclick="padKey('8')">8</button><button onclick="padKey('9')">9</button><button class="act" onclick="padKey('⌫')">⌫</button>
+    <button onclick="padKey('4')">4</button><button onclick="padKey('5')">5</button><button onclick="padKey('6')">6</button><button class="act" onclick="padKey('−')">+/−</button>
+    <button onclick="padKey('1')">1</button><button onclick="padKey('2')">2</button><button onclick="padKey('3')">3</button><button class="act" onclick="padKey('C')">C</button>
+    <button class="wide" onclick="padKey('0')">0</button><button class="act wide" onclick="check()">⚔️ OK</button>
+  </div>
+
+  <div class="row" style="margin-top:12px">
+    <button class="secondary" id="btnHint" onclick="hint()">💡 Indice (−5)</button>
+    <button class="secondary" id="btnSol" onclick="showSolution()">Solution</button>
+    <button class="secondary" id="btnNext" onclick="nextClick()">Suivant ➜</button>
+  </div>
+  <div class="feedback" id="feedback"></div>
+  <div class="center" id="timer" style="font-size:20px;font-weight:bold;color:var(--accent2);margin-top:8px"></div>
+</div>
+
+<details class="fold"><summary>📊 Mes statistiques</summary>
+  <div class="inner"><div id="statsBox"></div>
+  <div class="row" style="margin-top:10px"><button class="secondary" onclick="resetAll()">🗑️ Tout réinitialiser</button></div></div>
+</details>
+
+<details class="fold"><summary>🛒 Boutique (🪙 <span id="coins2">0</span>)</summary>
+  <div class="inner"><div id="shopBox"></div></div>
+</details>
+
+<details class="fold"><summary>🏅 Mes badges</summary>
+  <div class="inner"><div class="badges" id="badgeList"></div></div>
+</details>
+
+<details class="fold"><summary>⚙️ Réglages</summary>
+  <div class="inner row">
+    <label>Taille :
+      <select id="level"><option value="1">Petits nombres</option><option value="2" selected>Moyens</option><option value="3">Grands nombres</option></select>
+    </label>
+    <label><input type="checkbox" id="useTimer" checked> Chrono 45 s</label>
+    <label><input type="checkbox" id="autoLevel" checked> Difficulté progressive</label>
+    <label><input type="checkbox" id="adaptive" checked> Apprentissage adaptatif</label>
+    <label><input type="checkbox" id="usePad" checked> Pavé numérique</label>
+  </div>
+</details>
+
+<details class="fold"><summary>🧰 Outils (défi 60 s, fiche PDF)</summary>
+  <div class="inner">
+    <div class="row"><button class="secondary" onclick="startTimed()">⏱️ Défi 60 secondes</button></div>
+    <div class="row" style="margin-top:12px">
+      <label>Exercices : <input type="number" id="pdfCount" value="10" min="1" max="40" style="width:80px"></label>
+      <label><input type="checkbox" id="pdfSolutions" checked> Corrigé</label>
+      <button class="green" onclick="makePdf()">📄 Fiche PDF</button>
+    </div>
+  </div>
+</details>
+
+<details class="fold"><summary>📘 Rappel de cours</summary>
+  <div class="inner">
+    <div class="rule"><b>Addition, même signe :</b> on additionne les distances à zéro et on garde le signe. <br>Ex : (−3) + (−5) = −8</div>
+    <div class="rule"><b>Addition, signes différents :</b> on soustrait les distances à zéro et on garde le signe de celui qui a la plus grande distance. <br>Ex : (−7) + (+3) = −4</div>
+    <div class="rule"><b>Soustraction :</b> soustraire un nombre, c'est ajouter son opposé. <br>Ex : (+4) − (−6) = (+4) + (+6) = 10</div>
+    <div class="rule"><b>Multiplication / division :</b> même signe → résultat <b>positif</b> ; signes différents → résultat <b>négatif</b>. <br>Ex : (−4) × (−3) = 12 ; (−20) ÷ 5 = −4</div>
+    <div class="rule"><b>Plusieurs facteurs :</b> nombre <b>pair</b> de facteurs négatifs → + ; <b>impair</b> → −.</div>
+    <div class="rule"><b>Priorités :</b> parenthèses, puis × et ÷, puis + et − (de gauche à droite).</div>
+  </div>
+</details>
+</div>
+
+<div class="overlay" id="ovStart"><div class="modal">
+  <div class="big">🐉</div><h2>Prêt à chasser ?</h2>
+  <p>Résous les calculs pour vaincre les monstres. Tu as <b>3 ❤️</b>. Un <b>boss</b> t'attend tous les 5 monstres. Chaque victoire rapporte des <b>🪙</b> pour la boutique.</p>
+  <button class="gold" onclick="startGame()">⚔️ C'est parti !</button>
+  <button class="secondary" onclick="closeOv('ovStart')">Plus tard</button>
+</div></div>
+
+<div class="overlay" id="ovLevel"><div class="modal">
+  <div class="big">🎉</div><h2 id="ovLevelTitle"></h2><p id="ovLevelText"></p>
+  <button class="gold" onclick="closeOv('ovLevel');gameNext()">Continuer</button>
+</div></div>
+
+<div class="overlay" id="ovEnd"><div class="modal">
+  <div class="big" id="endIcon">💀</div><h2 id="endTitle">Game Over</h2><p id="endText"></p>
+  <div class="badges" id="endBadges"></div>
+  <button class="gold" onclick="closeOv('ovEnd');startGame()">🔁 Rejouer</button>
+  <button class="secondary" onclick="closeOv('ovEnd');setMode('train')">Entraînement</button>
+</div></div>
+
+<div class="overlay" id="ovPass"><div class="modal">
+  <div class="big">🎮</div><h2 id="passTitle"></h2><p>Passe la tablette à ce joueur puis appuie sur le bouton.</p>
+  <button class="gold" onclick="closeOv('ovPass');duelShow()">Je suis prêt</button>
+</div></div>
+
+<div id="printArea"></div>
+
+<script>
+/* ================= Outils ================= */
+let current=null,answered=false,good=0,total=0;
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const pick=a=>a[rnd(0,a.length-1)];
+const MINUS="−";
+const fmt=n=>n<0?MINUS+Math.abs(n):""+n;                 // affichage nombre
+const par=n=>n<0?`(${MINUS}${Math.abs(n)})`:`(+${n})`;    // (+5) ou (−5)
+const parNeg=n=>n<0?`(${MINUS}${Math.abs(n)})`:`${n}`;    // 5 ou (−5)
+const sgnWord=n=>n<0?"négatif":"positif";
+function maxVal(l){return l===1?9:l===2?20:50}
+function maxMul(l){return l===1?6:l===2?10:12}
+function rv(l,nz=true){let v=rnd(1,maxVal(l));return Math.random()<.5?-v:v}
+function rm(l){let v=rnd(2,maxMul(l));return Math.random()<.5?-v:v}
+function effLevel(){
+  const base=+$("level").value;
+  if(mode==="game"&&$("autoLevel").checked)return Math.min(3,Math.max(base,game.level<=1?1:game.level<=3?2:3));
+  return base;
+}
+const S=n=>n<0?MINUS+Math.abs(n):"+"+n; // avec signe explicite
+const eqLine=t=>[null,t];
+
+/* ================= Types d'exercices ================= */
+const TYPES=[
+{id:"add_same",name:"Addition (même signe)",cat:["add","addsub"],gen(l){
+  const s=Math.random()<.5?-1:1;const a=s*rnd(1,maxVal(l)),b=s*rnd(1,maxVal(l));const r=a+b;
+  return{latex:`${par(a)} + ${par(b)}`,res:r,steps:[
+   ["Les deux nombres ont le <b>même signe</b> ("+(s<0?"négatif":"positif")+") : on additionne les distances à zéro et on garde le signe.",null],
+   [null,`${par(a)} + ${par(b)} = ${s<0?MINUS:""}(${Math.abs(a)} + ${Math.abs(b)}) = ${fmt(r)}`]]}}},
+{id:"add_diff",name:"Addition (signes différents)",cat:["add","addsub"],gen(l){
+  let a=rnd(1,maxVal(l)),b=rnd(1,maxVal(l));while(a===b)b=rnd(1,maxVal(l));
+  if(Math.random()<.5)a=-a;else b=-b; if(Math.random()<.5){[a,b]=[b,a]}
+  const r=a+b;const big=Math.abs(a)>Math.abs(b)?a:b;
+  return{latex:`${par(a)} + ${par(b)}`,res:r,steps:[
+   ["Signes <b>différents</b> : on soustrait les distances à zéro ("+Math.max(Math.abs(a),Math.abs(b))+" − "+Math.min(Math.abs(a),Math.abs(b))+") et on garde le signe du nombre le plus « fort » ("+(big<0?"négatif":"positif")+").",null],
+   [null,`${par(a)} + ${par(b)} = ${fmt(r)}`]]}}},
+{id:"sub_simple",name:"Soustraction",cat:["sub","addsub"],gen(l){
+  const a=rv(l),b=rv(l);const r=a-b;
+  return{latex:`${par(a)} − ${par(b)}`,res:r,steps:[
+   ["Soustraire un nombre, c'est <b>ajouter son opposé</b> : l'opposé de "+fmt(b)+" est "+fmt(-b)+".",null],
+   [null,`${par(a)} − ${par(b)} = ${par(a)} + ${par(-b)} = ${fmt(r)}`]]}}},
+{id:"addsub_chain",name:"Addition/soustraction à 3 termes",cat:["addsub","chaine"],gen(l){
+  const a=rv(l),b=rv(l),c=rv(l);const o1=Math.random()<.5?"+":"−",o2=Math.random()<.5?"+":"−";
+  const t1=o1==="+"?b:-b,t2=o2==="+"?c:-c;const r=a+t1+t2;
+  return{latex:`${par(a)} ${o1} ${par(b)} ${o2} ${par(c)}`,res:r,steps:[
+   ["On transforme chaque soustraction en addition de l'opposé :",null],
+   [null,`${par(a)} + ${par(t1)} + ${par(t2)}`],
+   ["On calcule de gauche à droite :",null],
+   [null,`${par(a)} + ${par(t1)} = ${par(a+t1)}, puis ${par(a+t1)} + ${par(t2)} = ${fmt(r)}`]]}}},
+{id:"suppr_par",name:"Suppression de parenthèses",cat:["addsub","parent"],gen(l){
+  const a=rv(l),b=rv(l),c=rv(l);const o1=Math.random()<.5?"+":"−",o2=Math.random()<.5?"+":"−";
+  const A=Math.abs(a),B=Math.abs(b),C=Math.abs(c);
+  const w=(o,x)=>`${o} (${x<0?MINUS:"+"}${Math.abs(x)})`;
+  const t1=o1==="+"?b:-b,t2=o2==="+"?c:-c;const r=a+t1+t2;
+  const simp=n=>(n<0?"− ":"+ ");
+  return{latex:`${fmt(a)} ${o1} (${b<0?MINUS:"+"}${B}) ${o2} (${c<0?MINUS:"+"}${C})`,res:r,steps:[
+   ["Règle : « + ( + » donne +, « + ( − » donne −, « − ( + » donne −, « − ( − » donne +.",null],
+   [null,`${fmt(a)} ${simp(t1)}${Math.abs(t1)} ${simp(t2)}${Math.abs(t2)} = ${fmt(r)}`]]}}},
+{id:"mul",name:"Multiplication",cat:["mul"],gen(l){
+  const a=rm(l),b=rm(l);const r=a*b;
+  return{latex:`${parNeg(a)} × ${parNeg(b)}`,res:r,steps:[
+   [(a<0)===(b<0)?"Les deux nombres ont le <b>même signe</b> : le produit est <b>positif</b>.":"Les signes sont <b>différents</b> : le produit est <b>négatif</b>.",null],
+   [null,`${parNeg(a)} × ${parNeg(b)} = ${fmt(r)}  (${Math.abs(a)} × ${Math.abs(b)} = ${Math.abs(r)})`]]}}},
+{id:"mul3",name:"Produit de trois facteurs",cat:["mul","chaine"],gen(l){
+  const a=rm(Math.min(l,2)),b=rm(Math.min(l,2)),c=rm(Math.min(l,2));const r=a*b*c;
+  const neg=[a,b,c].filter(x=>x<0).length;
+  return{latex:`${parNeg(a)} × ${parNeg(b)} × ${parNeg(c)}`,res:r,steps:[
+   [`Il y a ${neg} facteur${neg>1?"s":""} négatif${neg>1?"s":""} (${neg%2===0?"pair":"impair"}) : le résultat est <b>${neg%2===0?"positif":"négatif"}</b>.`,null],
+   [null,`${Math.abs(a)} × ${Math.abs(b)} × ${Math.abs(c)} = ${Math.abs(r)}, donc le résultat est ${fmt(r)}`]]}}},
+{id:"div",name:"Division",cat:["div"],gen(l){
+  const b=rm(l),q=rm(l);const a=b*q;
+  return{latex:`${parNeg(a)} ÷ ${parNeg(b)}`,res:q,steps:[
+   [(a<0)===(b<0)?"Même signe : le quotient est <b>positif</b>.":"Signes différents : le quotient est <b>négatif</b>.",null],
+   [null,`${parNeg(a)} ÷ ${parNeg(b)} = ${fmt(q)}  (${Math.abs(a)} ÷ ${Math.abs(b)} = ${Math.abs(q)})`]]}}},
+{id:"prio1",name:"Priorités (a + b × c)",cat:["chaine","mul"],gen(l){
+  const a=rv(l),b=rm(Math.min(l,2)),c=rm(Math.min(l,2));const r=a+b*c;
+  return{latex:`${fmt(a)} + ${parNeg(b)} × ${parNeg(c)}`,res:r,steps:[
+   ["La multiplication est prioritaire :",null],
+   [null,`${parNeg(b)} × ${parNeg(c)} = ${fmt(b*c)}`],
+   ["Puis l'addition :",null],
+   [null,`${fmt(a)} + ${par(b*c)} = ${fmt(r)}`]]}}},
+{id:"prio2",name:"Priorités (a × b − c)",cat:["chaine","mul","sub"],gen(l){
+  const a=rm(Math.min(l,2)),b=rm(Math.min(l,2)),c=rv(l);const r=a*b-c;
+  return{latex:`${parNeg(a)} × ${parNeg(b)} − ${parNeg(c)}`,res:r,steps:[
+   ["La multiplication d'abord :",null],
+   [null,`${parNeg(a)} × ${parNeg(b)} = ${fmt(a*b)}`],
+   ["Puis la soustraction (on ajoute l'opposé) :",null],
+   [null,`${fmt(a*b)} − ${par(c)} = ${fmt(a*b)} + ${par(-c)} = ${fmt(r)}`]]}}},
+{id:"par_mul",name:"Parenthèses × nombre",cat:["parent","chaine"],gen(l){
+  const a=rv(l),b=rv(l),c=rm(Math.min(l,2));const r=(a+b)*c;
+  return{latex:`(${fmt(a)} + ${parNeg(b)}) × ${parNeg(c)}`,res:r,steps:[
+   ["On calcule d'abord les parenthèses :",null],
+   [null,`${fmt(a)} + ${parNeg(b)} = ${fmt(a+b)}`],
+   ["Puis on multiplie :",null],
+   [null,`${parNeg(a+b)} × ${parNeg(c)} = ${fmt(r)}`]]}}},
+{id:"par_div",name:"Fraction d'entiers relatifs",cat:["parent","div","chaine"],gen(l){
+  const c=rm(Math.min(l,2)),q=rm(Math.min(l,2));const s=c*q;const a=rv(l);let b=s-a; if(b===0){b=1}
+  const sum=a+b,d=rm(Math.min(l,2));const num=sum*d; // (a+b)=sum ; on construit (a+b) ÷ d
+  const r=Math.trunc(sum/ (sum%d===0?d:1)); // sécurité
+  const val=sum%d===0?sum/d:null;
+  if(val===null){const dd=rm(Math.min(l,2));const nn=dd*q;const x=rv(l);const y=nn-x;
+    return{latex:`(${fmt(x)} + ${parNeg(y)}) ÷ ${parNeg(dd)}`,res:q,steps:[
+    ["Parenthèses d'abord :",null],[null,`${fmt(x)} + ${parNeg(y)} = ${fmt(nn)}`],
+    ["Puis la division :",null],[null,`${parNeg(nn)} ÷ ${parNeg(dd)} = ${fmt(q)}`]]}}
+  return{latex:`(${fmt(a)} + ${parNeg(b)}) ÷ ${parNeg(d)}`,res:val,steps:[
+    ["Parenthèses d'abord :",null],[null,`${fmt(a)} + ${parNeg(b)} = ${fmt(sum)}`],
+    ["Puis la division :",null],[null,`${parNeg(sum)} ÷ ${parNeg(d)} = ${fmt(val)}`]]}}},
+{id:"problem",name:"Problèmes",cat:["probleme"],gen(l){
+  const k=rnd(0,2);
+  if(k===0){const t=rnd(1,Math.min(15,maxVal(l)+3)),d=rnd(t+1,t+15);
+    return{statement:`Il fait ${t} °C à midi. La température baisse de ${d} °C pendant la nuit. Quelle est la température (en °C) ?`,latex:`${t} − ${d}`,res:t-d,
+    steps:[["On soustrait la baisse :",null],[null,`${t} − ${d} = ${fmt(t-d)}`]]}}
+  if(k===1){const a=rnd(1,5)*(Math.random()<.5?-1:1)*rnd(1,3),n=rnd(2,6);
+    return{statement:`Un plongeur est à ${fmt(-rnd(5,5))} m. Il descend de ${n} m par minute pendant 3 minutes. Calcule son altitude finale (en m).`,latex:`−5 − 3 × ${n}`,res:-5-3*n,
+    steps:[["On calcule d'abord la descente :",null],[null,`3 × ${n} = ${3*n}`],["Puis on ajoute à l'altitude :",null],[null,`−5 − ${3*n} = ${fmt(-5-3*n)}`]]}}
+  const gain=rnd(2,9),perte=rnd(2,9),n1=rnd(2,5),n2=rnd(2,5);const r=gain*n1-perte*n2;
+  return{statement:`Un joueur gagne ${gain} points à chaque bonne réponse (${n1} réponses) et perd ${perte} points à chaque mauvaise (${n2} réponses). Quel est son score final ?`,latex:`${gain} × ${n1} − ${perte} × ${n2}`,res:r,
+  steps:[["On calcule les gains et les pertes :",null],[null,`${gain} × ${n1} = ${gain*n1}  et  ${perte} × ${n2} = ${perte*n2}`],[null,`${gain*n1} − ${perte*n2} = ${fmt(r)}`]]}}}
+];
+const BOSS_TYPES=["prio1","prio2","par_mul","par_div","mul3","addsub_chain","suppr_par"];
+
+/* ================= Stats & adaptatif ================= */
+function loadJ(k,def){try{const v=JSON.parse(localStorage.getItem(k));return v??def}catch(e){return def}}
+function saveJ(k,v){localStorage.setItem(k,JSON.stringify(v))}
+let stats=loadJ("rel_stats",{});
+function recStat(id,ok,secs){const s=stats[id]||(stats[id]={ok:0,ko:0,t:0,recent:[]});
+  if(ok)s.ok++;else s.ko++;s.t+=secs;s.recent.push(ok?1:0);if(s.recent.length>10)s.recent.shift();saveJ("rel_stats",stats)}
+function weight(id){const s=stats[id];if(!s||!s.recent.length)return 3;return 1+Math.round(s.recent.filter(x=>x===0).length/s.recent.length*8)}
+function renderStats(){
+  const rows=TYPES.map(t=>{const s=stats[t.id];const n=s?s.ok+s.ko:0;const pct=n?Math.round(s.ok/n*100):0;const avg=n?Math.round(s.t/n):0;
+    const col=pct>=80?"#10b981":pct>=50?"#f59e0b":"#ef4444";
+    return`<div class="srow"><div class="nm">${t.name}</div><div class="pb"><div class="pf" style="width:${n?pct:0}%;background:${col}"></div></div><div class="pv">${n?pct+"% · "+n+" · "+avg+"s":"—"}</div></div>`}).join("");
+  const weak=TYPES.filter(t=>stats[t.id]&&stats[t.id].recent.length>=3).map(t=>({t,w:weight(t.id)})).sort((a,b)=>b.w-a.w).slice(0,2).filter(x=>x.w>=4);
+  $("statsBox").innerHTML=rows+(weak.length?`<p style="margin-top:10px">🎯 <b>À travailler :</b> ${weak.map(x=>x.t.name).join(", ")}</p>`:"<p style='color:#6b7280;font-size:13px'>Réussite · nombre · temps moyen par exercice.</p>");
+}
+function resetAll(){if(confirm("Effacer statistiques, pièces, boutique et badges ?")){["rel_stats","rel_wallet","rel_badges","rel_best"].forEach(k=>localStorage.removeItem(k));location.reload()}}
+
+function activeTypes(){const c=$("category").value;return c==="all"?TYPES.filter(t=>t.id!=="problem"):TYPES.filter(t=>t.cat.includes(c))}
+function generateExercise(level,boss){
+  let list=activeTypes();
+  if(boss){const b=list.filter(t=>BOSS_TYPES.includes(t.id));list=b.length?b:TYPES.filter(t=>BOSS_TYPES.includes(t.id))}
+  const adaptive=$("adaptive").checked&&!pdfMode;
+  let pool=[];list.forEach(t=>{const w=adaptive?weight(t.id):1;for(let i=0;i<w;i++)pool.push(t)});
+  const type=pick(pool);const ex=type.gen(level);ex.typeId=type.id;return ex;
+}
+let pdfMode=false;
+
+/* ================= Boutique ================= */
+const SHOP=[
+ {id:"m_wiz",kind:"skin",ic:"🧙",name:"Sorcier",price:30,set:["🧙","🧚","🧞"]},
+ {id:"m_ani",kind:"skin",ic:"🦊",name:"Animaux",price:40,set:["🦊","🐻","🐺","🦁"]},
+ {id:"m_rob",kind:"skin",ic:"🤖",name:"Robots",price:50,set:["🤖","👾","🛸","📡"]},
+ {id:"m_sea",kind:"skin",ic:"🦑",name:"Océan",price:60,set:["🦑","🐙","🦈","🐊"]},
+ {id:"t_forest",kind:"theme",ic:"🌲",name:"Thème Forêt",price:40,theme:"th-forest"},
+ {id:"t_volcano",kind:"theme",ic:"🌋",name:"Thème Volcan",price:60,theme:"th-volcano"},
+ {id:"t_space",kind:"theme",ic:"🚀",name:"Thème Espace",price:80,theme:"th-space"},
+ {id:"ti_1",kind:"title",ic:"🎖️",name:"Apprenti",price:20,title:"Apprenti"},
+ {id:"ti_2",kind:"title",ic:"🛡️",name:"Chevalier des relatifs",price:70,title:"Chevalier des relatifs"},
+ {id:"ti_3",kind:"title",ic:"👑",name:"Maître des signes",price:120,title:"Maître des signes"}
+];
+let wallet=loadJ("rel_wallet",{coins:0,owned:{},skin:null,theme:null,title:null});
+function saveWallet(){saveJ("rel_wallet",wallet)}
+function applyTheme(){document.body.className="";if(wallet.theme){const it=SHOP.find(s=>s.id===wallet.theme);if(it)document.body.classList.add(it.theme)}}
+function updateCoins(){$("coins").textContent=wallet.coins;$("coins2").textContent=wallet.coins}
+function renderShop(){
+  const kinds=[["skin","Monstres"],["theme","Thèmes"],["title","Titres"]];
+  $("shopBox").innerHTML=(wallet.title?`<p>Titre actuel : <b>${SHOP.find(s=>s.id===wallet.title).title}</b></p>`:"")+kinds.map(([k,lab])=>
+  `<b>${lab}</b><div class="shop">`+SHOP.filter(s=>s.kind===k).map(s=>{
+    const owned=wallet.owned[s.id];const eq=wallet[k]===s.id;
+    return `<div class="item ${eq?"eq":""}"><div class="ic">${s.ic}</div>${s.name}<br>`+
+    (owned?`<button class="${eq?"secondary":""}" onclick="equip('${s.id}')">${eq?"Retirer":"Équiper"}</button>`:`<button ${wallet.coins<s.price?"disabled":""} onclick="buy('${s.id}')">🪙 ${s.price}</button>`)+`</div>`}).join("")+`</div>`).join("");
+}
+function titleName(){const it=wallet.title&&SHOP.find(s=>s.id===wallet.title);return it?it.title:""}
+function buy(id){const s=SHOP.find(x=>x.id===id);if(!s||wallet.owned[id]||wallet.coins<s.price)return;wallet.coins-=s.price;wallet.owned[id]=true;wallet[s.kind]=id;saveWallet();applyTheme();updateCoins();renderShop();sfx("level")}
+function equip(id){const s=SHOP.find(x=>x.id===id);if(!s||!wallet.owned[id])return;wallet[s.kind]=(wallet[s.kind]===id)?null:id;saveWallet();applyTheme();renderShop()}
+function addCoins(n){wallet.coins+=n;saveWallet();updateCoins();renderShop()}
+
+/* ================= Sons ================= */
+let soundOn=true,actx=null;
+function toggleSound(){soundOn=!soundOn;$("soundBtn").textContent=soundOn?"🔊":"🔇";localStorage.setItem("rel_sound",soundOn?"1":"0")}
+function tone(f,d,t="sine",delay=0,v=.12){try{actx=actx||new(window.AudioContext||window.webkitAudioContext)();const t0=actx.currentTime+delay;const o=actx.createOscillator(),g=actx.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,t0);g.gain.exponentialRampToValueAtTime(.0001,t0+d);o.connect(g);g.connect(actx.destination);o.start(t0);o.stop(t0+d)}catch(e){}}
+function sfx(n){if(!soundOn)return;
+ if(n==="win"){tone(523,.12,"triangle");tone(659,.12,"triangle",.1);tone(784,.2,"triangle",.2)}
+ if(n==="boss"){[523,659,784,1047].forEach((f,i)=>tone(f,.18,"square",i*.1,.08))}
+ if(n==="lose"){tone(220,.25,"sawtooth");tone(165,.35,"sawtooth",.2)}
+ if(n==="click")tone(660,.06,"sine",0,.08);
+ if(n==="level"){[392,523,659,784,1047].forEach((f,i)=>tone(f,.15,"triangle",i*.09))}
+ if(n==="over"){[392,330,262,196].forEach((f,i)=>tone(f,.3,"sawtooth",i*.18,.1))}
+ if(n==="tick")tone(880,.05,"square",0,.05)}
+
+/* ================= Pavé ================= */
+function padKey(k){
+  const el=$("ans");
+  if(k==="⌫")el.value=el.value.slice(0,-1);
+  else if(k==="C")el.value="";
+  else if(k==="−")el.value=el.value.startsWith(MINUS)?el.value.slice(1):MINUS+el.value;
+  else if(el.value.replace(MINUS,"").length<5)el.value+=k;
+  sfx("click");
+}
+function applyPad(){const on=$("usePad").checked;$("pad").classList.toggle("on",on);const e=$("ans");e.readOnly=on;e.setAttribute("inputmode",on?"none":"text")}
+$("usePad").addEventListener("change",applyPad);
+
+/* ================= Moteur ================= */
+let mode="train";
+let game=null,gameTimerId=null,gameTimeLeft=0,hintUsed=false,hintPenalty=0,bossNoError=true,startTs=0;
+const MONSTERS=["👾","🧟","👹","👻","🦇","🕷️","🐍","🦂","🤖","👽","🧛","🐲"];
+const BOSSES=["🐉","👿","💀","🦖","🐙","☠️"];
+const MNAMES=["Plusor","Moinsor","Zéroïd","Signator","Négativor","Opposix","Glaçon","Positron","Abscisse","Distancor","Relatif","Multiplix"];
+const BNAMES=["Dragon Négatif","Roi des Signes","Seigneur Opposé","Titan des Priorités","Kraken des Parenthèses","Faucheur de Signes"];
+const PER_LEVEL=5,TIME_PER=45;
+const BADGES=[
+ {id:"b5",ico:"🥉",name:"5 monstres",test:s=>s.kills>=5},
+ {id:"b15",ico:"🥈",name:"15 monstres",test:s=>s.kills>=15},
+ {id:"b30",ico:"🥇",name:"30 monstres",test:s=>s.kills>=30},
+ {id:"boss",ico:"🏆",name:"Boss sans erreur",test:s=>s.bossClean},
+ {id:"combo",ico:"🔥",name:"Série de 7",test:s=>s.maxStreak>=7},
+ {id:"lvl5",ico:"🚀",name:"Niveau 5",test:s=>s.level>=5}
+];
+const getBest=()=>+(localStorage.getItem("rel_best")||0);
+function renderBadgeList(id,only){const o=loadJ("rel_badges",{});const el=$(id);if(!el)return;
+ el.innerHTML=BADGES.filter(b=>!only||only.includes(b.id)).map(b=>`<span class="badge ${o[b.id]?"":"locked"}">${b.ico} ${b.name}</span>`).join("")}function checkBadges(){const o=loadJ("rel_badges",{});const fresh=[];
+ BADGES.forEach(b=>{if(!o[b.id]&&b.test(game)){o[b.id]=true;fresh.push(b.id)}});
+ if(fresh.length)saveJ("rel_badges",o);renderBadgeList("badgeList");return fresh}
+function closeOv(id){$(id).classList.remove("on")}
+function openStart(){$("ovStart").classList.add("on")}
+function skinSet(){const it=wallet.skin&&SHOP.find(s=>s.id===wallet.skin);return it?it.set:MONSTERS}
+function setMode(m){
+  mode=m;clearInterval(gameTimerId);clearInterval(timerId);timedMode=false;
+  const g=m==="game",d=m==="duel";
+  $("hudCard").style.display=g?"block":"none";
+  $("duelbar").classList.toggle("on",d);
+  $("btnHint").style.display=(g||d)?"":"none";
+  $("btnSol").style.display=(g||d)?"none":"";
+  $("btnNext").style.display=(g||d)?"none":"";
+  $("hpbar").style.display=(g||d)?"block":"none";
+  $("timeWrap").style.display=((g||d)&&$("useTimer").checked)?"block":"none";
+  $("timer").textContent="";
+  if(m==="train"){game=null;const mo=$("monster");mo.className="monster";mo.textContent=skinSet()[0];$("mname").textContent="Mode entraînement";newExercise()}
+}
+function isBossTurn(){return mode==="game"&&game&&game.inLevel===PER_LEVEL-1}
+function startGame(){
+  closeOv("ovStart");
+  game={lives:3,score:0,level:1,inLevel:0,kills:0,streak:0,maxStreak:0,mult:1,bossClean:false};
+  setMode("game");$("hudCard").style.display="block";
+  $("best").textContent=getBest();renderBadgeList("badgeList");updateHud();gameNext();
+}
+function updateHud(){
+  $("hearts").textContent="❤️".repeat(Math.max(0,game.lives))+"🖤".repeat(Math.max(0,3-game.lives));
+  $("score").textContent=game.score;$("lvl").textContent=game.level;
+  game.mult=game.streak>=5?3:game.streak>=3?2:1;$("mult").textContent=game.mult;updateCoins();
+}
+function gameNext(){
+  if(!game)return;const boss=isBossTurn();const mo=$("monster");
+  mo.className="monster appear"+(boss?" boss":"");mo.textContent=boss?pick(BOSSES):pick(skinSet());
+  const t=titleName();
+  $("mname").textContent=(t?`[${t}] `:"")+(boss?"👑 BOSS : "+pick(BNAMES):pick(MNAMES))+` (${game.inLevel+1}/${PER_LEVEL})`;
+  $("hpfill").style.width="100%";hintUsed=false;hintPenalty=0;if(boss)bossNoError=true;
+  newExercise(boss);startMonsterTimer();
+}
+function startMonsterTimer(){
+  clearInterval(gameTimerId);
+  const useT=$("useTimer").checked;
+  $("timeWrap").style.display=useT?"block":"none";
+  if(!useT)return;
+  const full=(isBossTurn()?TIME_PER+30:TIME_PER);gameTimeLeft=full;
+  const fill=$("timefill");fill.style.transition="none";fill.style.width="100%";fill.style.background="#10b981";void fill.offsetWidth;fill.style.transition="width 1s linear,background .3s";
+  $("timelabel").textContent=gameTimeLeft+" s";
+  gameTimerId=setInterval(()=>{
+    if(answered)return;gameTimeLeft--;
+    fill.style.width=Math.max(0,gameTimeLeft/full*100)+"%";
+    fill.style.background=gameTimeLeft<=10?"#ef4444":gameTimeLeft<=20?"#f59e0b":"#10b981";
+    $("timelabel").textContent=Math.max(0,gameTimeLeft)+" s";
+    if(gameTimeLeft<=5&&gameTimeLeft>0)sfx("tick");
+    if(gameTimeLeft<=0){clearInterval(gameTimerId);onTimeout()}
+  },1000);
+}
+function onTimeout(){
+  if(answered)return;answered=true;
+  recStat(current.typeId,false,TIME_PER);
+  const sol=solutionHTML();
+  if(mode==="duel"){show("ko","⏰ Temps écoulé !"+sol+`<div class="center"><button onclick="duelNext()">Continuer ➜</button></div>`);sfx("lose");return}
+  loseLife();show("ko","⏰ Temps écoulé !"+sol+`<div class="center"><button onclick="afterWrong()">Continuer ➜</button></div>`);
+}
+function floatText(t,c){const f=document.createElement("div");f.className="floating";f.textContent=t;if(c)f.style.color=c;$("mainCard").appendChild(f);setTimeout(()=>f.remove(),1100)}
+function confetti(n=40){const sym=["🎉","⭐","✨","🎊","💥"];for(let i=0;i<n;i++){const c=document.createElement("div");c.className="confetti";c.textContent=pick(sym);c.style.left=rnd(0,100)+"vw";c.style.animationDelay=Math.random()*.8+"s";c.style.animationDuration=1.6+Math.random()*1.4+"s";document.body.appendChild(c);setTimeout(()=>c.remove(),3500)}}
+function loseLife(){
+  game.lives--;game.streak=0;if(isBossTurn())bossNoError=false;updateHud();
+  const mo=$("monster");mo.classList.remove("appear");mo.classList.add("shake");setTimeout(()=>mo.classList.remove("shake"),500);sfx("lose");
+}
+function afterWrong(){if(!game)return;if(game.lives<=0){endGame();return}gameNext()}
+function victory(){
+  const boss=isBossTurn();const gain=Math.max(1,(boss?50:10)*game.mult-hintPenalty);
+  game.score+=gain;game.kills++;game.streak++;game.maxStreak=Math.max(game.maxStreak,game.streak);
+  if(boss&&bossNoError)game.bossClean=true;
+  const coin=boss?10:2;addCoins(coin);updateHud();
+  floatText(`+${gain} ⭐  +${coin} 🪙`);
+  const mo=$("monster");mo.classList.remove("appear");mo.classList.add("hit");
+  $("hpfill").style.width="0%";sfx(boss?"boss":"win");if(boss)confetti(60);
+  if(game.score>getBest()){localStorage.setItem("rel_best",game.score);$("best").textContent=game.score}
+  checkBadges();game.inLevel++;
+  if(game.inLevel>=PER_LEVEL){
+    game.inLevel=0;game.level++;updateHud();checkBadges();
+    setTimeout(()=>{sfx("level");confetti(40);
+      $("ovLevelTitle").textContent="Niveau "+game.level+" !";
+      $("ovLevelText").innerHTML="Boss vaincu ! Les monstres deviennent plus costauds…"+(game.lives<3?"<br>+1 ❤️ offert !":"");
+      if(game.lives<3){game.lives++;updateHud()}
+      $("ovLevel").classList.add("on")},900);
+  }else setTimeout(gameNext,1100);
+}
+function endGame(){
+  clearInterval(gameTimerId);sfx("over");const best=getBest();const fresh=checkBadges();
+  $("endIcon").textContent="💀";$("endTitle").textContent="Game Over";
+  $("endText").innerHTML=`Score : <b>${game.score}</b> ⭐<br>Monstres vaincus : <b>${game.kills}</b><br>Meilleure série : <b>${game.maxStreak}</b> 🔥<br>Record : <b>${Math.max(best,game.score)}</b> 🏆`+(game.score>=best&&game.score>0?"<br>🎉 Nouveau record !":"");
+  renderBadgeList("endBadges",fresh);if(!fresh.length)$("endBadges").innerHTML="";
+  $("ovEnd").classList.add("on");renderStats();
+}
+
+/* ===== Duel ===== */
+let duel=null;
+function startDuel(){
+  duel={p:0,pts:[0,0],round:0,rounds:10};
+  setMode("duel");
+  $("pts1").textContent=0;$("pts2").textContent=0;
+  duelPass();
+}
+function duelPass(){
+  $("pl1").classList.toggle("act",duel.p===0);
+  $("pl2").classList.toggle("act",duel.p===1);
+  $("passTitle").textContent="Au tour du Joueur "+(duel.p+1);
+  $("ovPass").classList.add("on");
+}
+function duelShow(){
+  const mo=$("monster");mo.className="monster appear";mo.textContent=pick(skinSet());
+  $("mname").textContent=`Duel · manche ${Math.floor(duel.round/2)+1}/${duel.rounds/2} · Joueur ${duel.p+1}`;
+  $("hpfill").style.width="100%";hintUsed=false;hintPenalty=0;
+  newExercise(false);startMonsterTimer();
+}
+function duelNext(){
+  duel.round++;duel.p=1-duel.p;
+  if(duel.round>=duel.rounds){duelEnd();return}
+  duelPass();
+}
+function duelEnd(){
+  clearInterval(gameTimerId);sfx("level");confetti(60);
+  const[a,b]=duel.pts;
+  $("endIcon").textContent=a===b?"🤝":"🏆";
+  $("endTitle").textContent=a===b?"Égalité !":`Joueur ${a>b?1:2} gagne !`;
+  $("endText").innerHTML=`Joueur 1 : <b>${a}</b> ⭐<br>Joueur 2 : <b>${b}</b> ⭐`;
+  $("endBadges").innerHTML="";
+  $("ovEnd").classList.add("on");renderStats();
+}
+function hint(){
+  if(!current||answered||mode==="train"||hintUsed)return;hintUsed=true;hintPenalty=5;
+  const first=current.steps.find(s=>s[0]);
+  show("partial","💡 Indice (−5 points) :"+(first?`<span class="step">${first[0]}</span>`:"Pense aux signes et aux priorités de calcul."));
+}
+function nextClick(){if(mode==="train")newExercise()}
+
+/* ===== Interface ===== */
+function newExercise(boss){
+  const level=effLevel();
+  current=generateExercise(level,boss===true);
+  const st=$("statement"),ex=$("exercise");
+  if(current.statement){st.textContent=current.statement;ex.textContent=""}
+  else{st.textContent="Calcule et donne le résultat (entier relatif).";ex.textContent=current.latex}
+  const t=TYPES.find(x=>x.id===current.typeId);
+  $("typeTag").textContent=boss===true?"👑 Boss":(t?t.name:"Calcul");
+  $("ans").value="";
+  $("feedback").style.display="none";answered=false;startTs=Date.now();
+  if(!$("usePad").checked)$("ans").focus();
+}
+function solutionHTML(){
+  return current.steps.map(([t,l])=>t?`<span class="step">${t}</span>`:`<span class="step" style="text-align:center;font-weight:600">${l}</span>`).join("")
+    +`<span class="step" style="text-align:center;font-size:20px">Résultat : <b>${fmt(current.res)}</b></span>`;
+}
+function show(cls,html){const fb=$("feedback");fb.className="feedback "+cls;fb.innerHTML=html;fb.style.display="block"}
+function parseI(s){s=s.trim().replace(/[−–—]/g,"-").replace(/\s+/g,"").replace(/^\+/,"");return /^-?\d+$/.test(s)?parseInt(s,10):NaN}
+function check(){
+  if(!current||answered)return;
+  if(timedMode&&timeLeft<=0)return;
+  const u=parseI($("ans").value);
+  if(isNaN(u)){show("ko","Entre un nombre entier (utilise +/− pour le signe).");return}
+  const secs=Math.round((Date.now()-startTs)/1000);
+  const sol=solutionHTML();
+  if(u===current.res){
+    answered=true;good++;total++;clearInterval(gameTimerId);recStat(current.typeId,true,secs);
+    if(mode==="game"){show("ok","✅ Touché ! Monstre vaincu."+sol);victory()}
+    else if(mode==="duel"){
+      const gain=Math.max(1,10-hintPenalty+Math.max(0,Math.round((TIME_PER-secs)/9)));
+      duel.pts[duel.p]+=gain;$("pts"+(duel.p+1)).textContent=duel.pts[duel.p];
+      $("monster").classList.add("hit");sfx("win");floatText("+"+gain+" ⭐");
+      show("ok","✅ Bravo ! +"+gain+" points."+sol+`<div class="center"><button onclick="duelNext()">Joueur suivant ➜</button></div>`);
+    }else{
+      show("ok","✅ Bravo !"+sol);sfx("win");
+      if(timedMode)setTimeout(()=>newExercise(),700);
+    }
+  }else{
+    answered=true;total++;clearInterval(gameTimerId);recStat(current.typeId,false,secs);
+    const sh=(u===-current.res&&current.res!==0)?" Attention : le signe est faux.":"";
+    if(mode==="game"){loseLife();show("ko","💥 Le monstre t'a touché ! −1 ❤️."+sh+sol+`<div class="center"><button onclick="afterWrong()">Continuer ➜</button></div>`)}
+    else if(mode==="duel"){sfx("lose");show("ko","❌ Raté !"+sh+sol+`<div class="center"><button onclick="duelNext()">Joueur suivant ➜</button></div>`)}
+    else{show("ko","❌ Pas la bonne réponse."+sh+sol);sfx("lose");if(timedMode)setTimeout(()=>newExercise(),1500)}
+  }
+  renderStats();
+}
+function showSolution(){
+  if(!current||mode!=="train")return;
+  if(!answered){answered=true;total++;recStat(current.typeId,false,Math.round((Date.now()-startTs)/1000));renderStats()}
+  show("partial","💡 Solution :"+solutionHTML());
+}
+
+/* ===== Défi 60 s ===== */
+let timerId=null,timeLeft=0,timedMode=false;
+function startTimed(){
+  if(mode!=="train")setMode("train");
+  good=0;total=0;timeLeft=60;timedMode=true;clearInterval(timerId);
+  $("timer").textContent="⏱️ 60 s";newExercise();
+  timerId=setInterval(()=>{timeLeft--;$("timer").textContent="⏱️ "+timeLeft+" s";if(timeLeft<=0)endTimed()},1000);
+}
+function endTimed(){clearInterval(timerId);timedMode=false;$("timer").textContent="⏰ Terminé ! Score : "+good+" / "+total;sfx("level")}
+
+/* ===== PDF ===== */
+function makePdf(){
+  const count=Math.max(1,Math.min(40,parseInt($("pdfCount").value,10)||10));
+  const withSol=$("pdfSolutions").checked;
+  const level=+$("level").value;
+  pdfMode=true;
+  const exs=[];for(let i=0;i<count;i++)exs.push(generateExercise(level,false));
+  pdfMode=false;
+  const cs=$("category");const catLabel=cs.options[cs.selectedIndex].text;
+  let html=`<h2>Fiche d'exercices : Entiers relatifs</h2><p>Catégorie : <b>${catLabel}</b> | Date : ${new Date().toLocaleDateString("fr-FR")} | Nom : ____________________</p><p><i>Calcule chaque expression en détaillant les étapes.</i></p>`;
+  exs.forEach((ex,i)=>{html+=ex.statement?`<div class="pitem"><b>${i+1}.</b> ${ex.statement}</div>`:`<div class="pitem"><b>${i+1}.</b> ${ex.latex} = <span class="pline"></span></div>`});
+  if(withSol){
+    html+=`<div class="pagebreak"></div><h2>Corrigé</h2>`;
+    exs.forEach((ex,i)=>{
+      const st=ex.steps.map(([t,l])=>t?`<div>${t}</div>`:`<div><b>${l}</b></div>`).join("");
+      html+=`<div class="psol"><b>${i+1}.</b> ${ex.statement?ex.statement:ex.latex}${st}<div>Résultat : <b>${fmt(ex.res)}</b></div></div>`;
+    });
+  }
+  $("printArea").innerHTML=html;setTimeout(()=>window.print(),400);
+}
+
+/* ===== Événements ===== */
+document.addEventListener("keydown",e=>{
+  if(document.querySelector(".overlay.on"))return;
+  if(["SELECT","BUTTON"].includes(document.activeElement.tagName))return;
+  if(e.key==="Enter"){if(!answered)check();else if(mode==="train")newExercise()}
+  if($("usePad").checked){
+    if(/^[0-9]$/.test(e.key))padKey(e.key);
+    else if(e.key==="Backspace")padKey("⌫");
+    else if(e.key==="-")padKey("−");
+  }
+});
+["category","level"].forEach(id=>$(id).addEventListener("change",()=>{
+  if(mode==="game")gameNext();else if(mode==="duel")duelShow();else newExercise()}));
+$("useTimer").addEventListener("change",()=>{
+  $("timeWrap").style.display=((mode==="game"||mode==="duel")&&$("useTimer").checked)?"block":"none";
+  if((mode==="game"||mode==="duel")&&!answered)startMonsterTimer()});
+window.addEventListener("load",()=>{
+  soundOn=localStorage.getItem("rel_sound")!=="0";
+  $("soundBtn").textContent=soundOn?"🔊":"🔇";
+  $("best").textContent=getBest();
+  applyTheme();applyPad();updateCoins();renderShop();renderStats();renderBadgeList("badgeList");
+  setMode("train");
+});
+</script>
+</body>
+</html>
