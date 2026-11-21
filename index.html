@@ -7,11 +7,11 @@
 <style>
 *{box-sizing:border-box}
 :root{--bg1:#1e1b4b;--bg2:#4338ca;--accent:#4f46e5;--accent2:#3730a3;--soft:#e0e7ff}
-body{font-family:"Segoe UI",Arial,sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));min-height:100vh;margin:0;padding:12px;color:#1f2937}
+body{font-family:"Segoe UI",Arial,sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));background-attachment:fixed;min-height:100vh;margin:0;padding:12px;color:#1f2937}
 body.th-forest{--bg1:#052e16;--bg2:#15803d;--accent:#059669;--accent2:#065f46;--soft:#d1fae5}
 body.th-volcano{--bg1:#450a0a;--bg2:#c2410c;--accent:#dc2626;--accent2:#7f1d1d;--soft:#fee2e2}
 body.th-space{--bg1:#020617;--bg2:#1e3a8a;--accent:#2563eb;--accent2:#1e3a8a;--soft:#dbeafe}
-.container{max-width:760px;margin:auto}
+.container{max-width:760px;margin:auto;position:relative;z-index:1}
 h1{text-align:center;color:#fde68a;margin:0 0 10px;font-size:22px}
 .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 4px 14px rgba(0,0,0,.25);position:relative}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
@@ -102,8 +102,153 @@ details.fold .inner{margin-top:12px}
 .companion.evolve .cico{animation:evolve 1.2s}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 @keyframes evolve{0%{transform:scale(1)}30%{transform:scale(1.8) rotate(-15deg);filter:brightness(2)}60%{transform:scale(.8) rotate(15deg)}100%{transform:scale(1)}}
+
+/* ===== Thèmes décorés ===== */
+body::before,body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0;transition:opacity .6s}
+
+/* ESPACE : étoiles scintillantes + nébuleuse */
+body.th-space{
+  background:
+    radial-gradient(ellipse at 20% 15%,rgba(139,92,246,.35),transparent 45%),
+    radial-gradient(ellipse at 80% 70%,rgba(56,189,248,.25),transparent 50%),
+    linear-gradient(180deg,#020617,#0b1b4d 60%,#1e3a8a);
+  background-attachment:fixed}
+body.th-space::before{
+  opacity:1;
+  background-image:
+    radial-gradient(2px 2px at 10% 20%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 25% 70%,#fde68a,transparent),
+    radial-gradient(2px 2px at 40% 35%,#fff,transparent),
+    radial-gradient(1px 1px at 55% 85%,#fff,transparent),
+    radial-gradient(2px 2px at 70% 15%,#bfdbfe,transparent),
+    radial-gradient(1.5px 1.5px at 85% 55%,#fff,transparent),
+    radial-gradient(1px 1px at 92% 90%,#fde68a,transparent),
+    radial-gradient(1px 1px at 5% 60%,#fff,transparent),
+    radial-gradient(2px 2px at 62% 50%,#fff,transparent),
+    radial-gradient(1px 1px at 33% 92%,#bfdbfe,transparent);
+  background-size:300px 300px;
+  animation:twinkle 3s ease-in-out infinite alternate}
+body.th-space::after{
+  opacity:1;
+  background-image:
+    radial-gradient(1.5px 1.5px at 15% 40%,#fff,transparent),
+    radial-gradient(2px 2px at 48% 10%,#fff,transparent),
+    radial-gradient(1px 1px at 78% 38%,#fde68a,transparent),
+    radial-gradient(1.5px 1.5px at 90% 75%,#fff,transparent),
+    radial-gradient(1px 1px at 30% 55%,#fff,transparent);
+  background-size:420px 420px;
+  animation:twinkle 4.5s ease-in-out infinite alternate-reverse}
+@keyframes twinkle{0%{opacity:.35;transform:translateY(0)}100%{opacity:1;transform:translateY(-12px)}}
+
+/* FORÊT : lucioles + feuillage */
+body.th-forest{
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(16,185,129,.35),transparent 60%),
+    linear-gradient(180deg,#022c22,#14532d 60%,#166534);
+  background-attachment:fixed}
+body.th-forest::before{
+  opacity:1;
+  background-image:
+    radial-gradient(4px 4px at 12% 30%,#fef08a,transparent),
+    radial-gradient(3px 3px at 35% 65%,#bef264,transparent),
+    radial-gradient(4px 4px at 60% 25%,#fef08a,transparent),
+    radial-gradient(3px 3px at 80% 70%,#bef264,transparent),
+    radial-gradient(3px 3px at 90% 20%,#fef08a,transparent),
+    radial-gradient(4px 4px at 22% 88%,#bef264,transparent);
+  background-size:380px 380px;
+  filter:blur(.5px);
+  animation:fireflies 6s ease-in-out infinite alternate}
+@keyframes fireflies{0%{opacity:.2;transform:translate(0,0)}50%{opacity:1;transform:translate(14px,-18px)}100%{opacity:.3;transform:translate(-10px,10px)}}
+
+/* VOLCAN : braises qui montent + lueur de lave */
+body.th-volcano{
+  background:
+    radial-gradient(ellipse at 50% 110%,rgba(251,146,60,.65),transparent 55%),
+    linear-gradient(180deg,#1c0505,#7f1d1d 55%,#c2410c);
+  background-attachment:fixed}
+body.th-volcano::before{
+  opacity:1;
+  background-image:
+    radial-gradient(3px 3px at 10% 90%,#fb923c,transparent),
+    radial-gradient(2px 2px at 28% 75%,#fde047,transparent),
+    radial-gradient(3px 3px at 47% 95%,#f97316,transparent),
+    radial-gradient(2px 2px at 66% 80%,#fde047,transparent),
+    radial-gradient(3px 3px at 82% 92%,#fb923c,transparent),
+    radial-gradient(2px 2px at 95% 70%,#fde047,transparent);
+  background-size:340px 340px;
+  animation:embers 5s linear infinite}
+@keyframes embers{0%{background-position:0 0;opacity:1}100%{background-position:30px -340px;opacity:.2}}
+
+/* OCÉAN : bulles qui montent */
+body.th-ocean{--bg1:#042f4a;--bg2:#0e7490;--accent:#0891b2;--accent2:#155e75;--soft:#cffafe;
+  background:radial-gradient(ellipse at 50% 120%,rgba(34,211,238,.4),transparent 60%),linear-gradient(180deg,#042f4a,#0e7490 70%,#0891b2);
+  background-attachment:fixed}
+body.th-ocean::before{opacity:1;
+  background-image:
+    radial-gradient(6px 6px at 10% 90%,rgba(255,255,255,.5),transparent),
+    radial-gradient(4px 4px at 30% 80%,rgba(255,255,255,.4),transparent),
+    radial-gradient(8px 8px at 55% 95%,rgba(255,255,255,.4),transparent),
+    radial-gradient(5px 5px at 75% 85%,rgba(255,255,255,.5),transparent),
+    radial-gradient(4px 4px at 92% 92%,rgba(255,255,255,.4),transparent);
+  background-size:360px 360px;animation:bubbles 7s linear infinite}
+@keyframes bubbles{0%{background-position:0 0;opacity:1}100%{background-position:20px -360px;opacity:.2}}
+
+/* SAKURA : pétales qui tombent */
+body.th-sakura{--bg1:#500724;--bg2:#be185d;--accent:#db2777;--accent2:#831843;--soft:#fce7f3;
+  background:radial-gradient(ellipse at 50% 0%,rgba(251,207,232,.35),transparent 55%),linear-gradient(180deg,#500724,#9d174d 60%,#be185d);
+  background-attachment:fixed}
+body.th-sakura::before{opacity:1;
+  background-image:
+    radial-gradient(5px 3px at 12% 10%,#fbcfe8,transparent),
+    radial-gradient(4px 3px at 32% 30%,#f9a8d4,transparent),
+    radial-gradient(5px 3px at 52% 5%,#fbcfe8,transparent),
+    radial-gradient(4px 3px at 72% 25%,#f9a8d4,transparent),
+    radial-gradient(5px 3px at 90% 12%,#fbcfe8,transparent);
+  background-size:380px 380px;animation:petals 9s linear infinite}
+@keyframes petals{0%{background-position:0 0;opacity:1}100%{background-position:-50px 380px;opacity:.3}}
+
+/* DÉSERT : sable et soleil */
+body.th-desert{--bg1:#78350f;--bg2:#d97706;--accent:#ea580c;--accent2:#7c2d12;--soft:#ffedd5;
+  background:radial-gradient(circle at 80% 15%,rgba(254,240,138,.6),transparent 25%),linear-gradient(180deg,#92400e,#d97706 55%,#fbbf24);
+  background-attachment:fixed}
+body.th-desert::before{opacity:1;
+  background-image:
+    radial-gradient(2px 1px at 10% 70%,rgba(255,237,213,.7),transparent),
+    radial-gradient(2px 1px at 40% 85%,rgba(255,237,213,.6),transparent),
+    radial-gradient(2px 1px at 70% 75%,rgba(255,237,213,.7),transparent),
+    radial-gradient(2px 1px at 90% 90%,rgba(255,237,213,.6),transparent);
+  background-size:300px 300px;animation:sand 4s linear infinite}
+@keyframes sand{0%{background-position:0 0;opacity:.9}100%{background-position:-300px 20px;opacity:.3}}
+
+/* ===== Tutoriel guidé ===== */
+.tuto-dim{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:70;display:none}
+.tuto-dim.on{display:block}
+.tuto-hl{position:relative;z-index:80!important;box-shadow:0 0 0 4px #f59e0b,0 0 25px 8px rgba(245,158,11,.7)!important;border-radius:12px;animation:hlpulse 1.2s infinite}
+@keyframes hlpulse{50%{box-shadow:0 0 0 6px #f59e0b,0 0 35px 14px rgba(245,158,11,.5)}}
+.tuto-bubble{position:fixed;z-index:90;background:#fff;border-radius:16px;padding:14px 16px;max-width:320px;width:calc(100vw - 28px);box-shadow:0 10px 35px rgba(0,0,0,.5);display:none;border:3px solid #f59e0b}
+.tuto-bubble.on{display:block;animation:popb .3s}
+@keyframes popb{0%{opacity:0;transform:scale(.8)}100%{opacity:1;transform:scale(1)}}
+.tuto-bubble h3{margin:0 0 6px;color:var(--accent2);font-size:17px}
+.tuto-bubble p{margin:0 0 10px;color:#374151;font-size:14px;line-height:1.5}
+.tuto-bubble .tb-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tuto-bubble .tb-step{font-size:12px;color:#9ca3af}
+.tuto-bubble button{padding:6px 12px;font-size:14px}
+
+/* Info-bulles au survol / au toucher */
+[data-tip]{position:relative}
+[data-tip]:hover::after,[data-tip].tip-on::after{
+  content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:#1f2937;color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:500;
+  white-space:normal;width:max-content;max-width:210px;text-align:center;line-height:1.35;z-index:40;pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,.4)}
+[data-tip]:hover::before,[data-tip].tip-on::before{
+  content:"";position:absolute;bottom:calc(100% + 2px);left:50%;transform:translateX(-50%);
+  border:6px solid transparent;border-top-color:#1f2937;z-index:40}
+.hud .box[data-tip]:hover::after,.hud .box[data-tip].tip-on::after{bottom:auto;top:calc(100% + 8px)}
+.hud .box[data-tip]:hover::before,.hud .box[data-tip].tip-on::before{bottom:auto;top:calc(100% + 2px);border-top-color:transparent;border-bottom-color:#1f2937}
+
 #printArea{display:none}
-@media print{body{background:#fff;padding:0}.container,.overlay,.confetti{display:none!important}#printArea{display:block}.pagebreak{page-break-before:always}.pitem{margin:22px 0;font-size:20px}.psol{margin:12px 0;font-size:15px}.pline{display:inline-block;width:120px;border-bottom:1px solid #000;margin-left:12px}}
+@media print{body{background:#fff;padding:0}body::before,body::after{display:none}.container,.overlay,.confetti,.tuto-dim,.tuto-bubble{display:none!important}#printArea{display:block}.pagebreak{page-break-before:always}.pitem{margin:22px 0;font-size:20px}.psol{margin:12px 0;font-size:15px}.pline{display:inline-block;width:120px;border-bottom:1px solid #000;margin-left:12px}}
 </style>
 </head>
 <body>
@@ -130,6 +275,7 @@ details.fold .inner{margin-top:12px}
   <button class="gold" onclick="startDuel()">⚔️ Duel</button>
   <button class="secondary" onclick="setMode('train')">🧘 Entraînement</button>
   <button class="secondary" id="soundBtn" onclick="toggleSound()">🔊</button>
+  <button class="secondary" onclick="tutoStart(true)" data-tip="Relancer le tutoriel guidé">❓</button>
 </div>
 
 <div class="duelbar" id="duelbar">
@@ -194,7 +340,7 @@ details.fold .inner{margin-top:12px}
   <div class="row" style="margin-top:10px"><button class="secondary" onclick="resetAll()">🗑️ Tout réinitialiser</button></div></div>
 </details>
 
-<details class="fold"><summary>🛒 Boutique (🪙 <span id="coins2">0</span>)</summary>
+<details class="fold" id="shopFold"><summary>🛒 Boutique (🪙 <span id="coins2">0</span>)</summary>
   <div class="inner"><div id="shopBox"></div></div>
 </details>
 
@@ -225,7 +371,7 @@ details.fold .inner{margin-top:12px}
   </div>
 </details>
 
-<details class="fold"><summary>📘 Rappel de cours</summary>
+<details class="fold" id="courseFold"><summary>📘 Rappel de cours</summary>
   <div class="inner">
     <div class="rule"><b>Addition, même signe :</b> on additionne les distances à zéro et on garde le signe. <br>Ex : (−3) + (−5) = −8</div>
     <div class="rule"><b>Addition, signes différents :</b> on soustrait les distances à zéro et on garde le signe de celui qui a la plus grande distance. <br>Ex : (−7) + (+3) = −4</div>
@@ -271,6 +417,19 @@ details.fold .inner{margin-top:12px}
   <button class="gold" onclick="saveId()">✅ Valider</button>
 </div></div>
 
+<!-- Tutoriel guidé -->
+<div class="tuto-dim" id="tutoDim"></div>
+<div class="tuto-bubble" id="tutoBubble">
+  <h3 id="tbTitle"></h3><p id="tbText"></p>
+  <div class="tb-row">
+    <span class="tb-step" id="tbStep"></span>
+    <span>
+      <button class="secondary" onclick="tutoEnd()">Passer</button>
+      <button class="gold" id="tbNext" onclick="tutoNext()">Suivant ➜</button>
+    </span>
+  </div>
+</div>
+
 <div id="printArea"></div>
 
 <script>
@@ -315,6 +474,7 @@ function saveId(){
   localStorage.setItem("codeEleve",c);
   localStorage.setItem("classeEleve",k);
   closeOv("ovId");
+  tutoStart();
 }
 function envoyerBilan(){
   if(!game)return;
@@ -330,6 +490,9 @@ function envoyerBilan(){
     const xp=comp.xp[ci.id]||0;
     detail+=" | Compagnon: "+ci.name+" ("+STAGES[stageOf(xp)].name+", "+xp+" XP)";
   }
+  if(Number.isInteger(game.adventureZone)&&ZONES[game.adventureZone]){
+    detail+=" | Zone: "+ZONES[game.adventureZone].name;
+  }
   const taux=n?Math.round(ok/n*100)+"%":"0%";
   envoyerResultats(game.score,game.kills,taux,detail);
 }
@@ -338,9 +501,14 @@ function envoyerBilan(){
 const ZONES=[
   {name:"Forêt des signes",icon:"🌲",category:"addsub"},
   {name:"Grotte des parenthèses",icon:"🪨",category:"parent"},
-  {name:"Volcan des priorités",icon:"🌋",category:"chaine"}
+  {name:"Volcan des priorités",icon:"🌋",category:"chaine"},
+  {name:"Montagne des Produits",icon:"🏔️",category:"mul"},
+  {name:"Gouffre des Quotients",icon:"🕳️",category:"div"},
+  {name:"Château Mixte",icon:"🏰",category:"all"}
 ];
 let adventure=loadJ("rel_adventure",{unlocked:0,completed:[]});
+/* Migration : débloque la zone suivante si l'élève avait déjà terminé son ancienne dernière zone */
+if(adventure.completed.length>0&&adventure.unlocked<ZONES.length-1&&adventure.completed.includes(adventure.unlocked)){adventure.unlocked++;}
 function saveAdventure(){saveJ("rel_adventure",adventure)}
 function renderMap(){
   $("map").innerHTML=ZONES.map((zone,i)=>{
@@ -354,11 +522,14 @@ function renderMap(){
   }).join("");
 }
 function startAdventure(zoneIndex){
-  if(zoneIndex===undefined)zoneIndex=adventure.unlocked;
+  if(zoneIndex===undefined){
+    if(adventure.completed.length>=ZONES.length){alert("🎉 Tu as terminé toutes les zones !");return}
+    zoneIndex=adventure.unlocked;
+  }
   if(zoneIndex>adventure.unlocked||adventure.completed.includes(zoneIndex))return;
   $("category").value=ZONES[zoneIndex].category;
   setMode("game");
-  game={lives:3,score:0,level:1,inLevel:0,kills:0,streak:0,maxStreak:0,mult:1,bossClean:false,adventureZone:zoneIndex};
+  game={lives:3,score:0,level:1,inLevel:0,kills:0,streak:0,maxStreak:0,mult:1,bossClean:false,adventureZone:zoneIndex,perfectZone:true};
   window.partieStats={};
   $("hudCard").style.display="block";
   $("best").textContent=getBest();
@@ -458,9 +629,9 @@ function renderStats(){
   const rows=TYPES.map(t=>{const s=stats[t.id];const n=s?s.ok+s.ko:0;const pct=n?Math.round(s.ok/n*100):0;const avg=n?Math.round(s.t/n):0;
     const col=pct>=80?"#10b981":pct>=50?"#f59e0b":"#ef4444";
     return`<div class="srow"><div class="nm">${t.name}</div><div class="pb"><div class="pf" style="width:${n?pct:0}%;background:${col}"></div></div><div class="pv">${n?pct+"% · "+n+" · "+avg+"s":"—"}</div></div>`}).join("");
-  $("statsBox").innerHTML=rows+"<p style='color:#6b7280;font-size:13px;margin-top:8px'>Réussite · nombre · temps moyen par exercice.</p>";
+      $("statsBox").innerHTML=rows+"<p style='color:#6b7280;font-size:13px;margin-top:8px'>Réussite · nombre · temps moyen par exercice.</p>";
 }
-function resetAll(){if(confirm("Effacer statistiques, pièces, boutique, badges et compagnons ?")){["rel_stats","rel_wallet","rel_badges","rel_best","rel_adventure","rel_comp"].forEach(k=>localStorage.removeItem(k));location.reload()}}
+function resetAll(){if(confirm("Effacer statistiques, pièces, boutique, badges et compagnons ?")){["rel_stats","rel_wallet","rel_badges","rel_best","rel_adventure","rel_comp","rel_seen","rel_tuto_done"].forEach(k=>localStorage.removeItem(k));location.reload()}}
 
 function activeTypes(){const c=$("category").value;return c==="all"?TYPES.filter(t=>t.id!=="problem"):TYPES.filter(t=>t.cat.includes(c))}
 function generateExercise(level,boss){
@@ -477,9 +648,16 @@ const SHOP=[
  {id:"m_wiz",kind:"skin",ic:"🧙",name:"Sorcier",price:30,set:["🧙","🧚","🧞"]},
  {id:"m_ani",kind:"skin",ic:"🦊",name:"Animaux",price:40,set:["🦊","🐻","🐺","🦁"]},
  {id:"m_rob",kind:"skin",ic:"🤖",name:"Robots",price:50,set:["🤖","👾","🛸","📡"]},
+ {id:"m_dra",kind:"skin",ic:"🐉",name:"Dragons",price:70,set:["🐉","🐲","🦖","🦎"]},
+ {id:"m_pan",kind:"skin",ic:"🐼",name:"Peluches",price:45,set:["🐼","🐨","🐰","🐹"]},
+ {id:"m_uni",kind:"skin",ic:"🦄",name:"Féerique",price:90,set:["🦄","🧜","🧝","🪄"]},
+ {id:"m_oce",kind:"skin",ic:"🐙",name:"Abysses",price:60,set:["🐙","🦑","🦈","🐡"]},
  {id:"t_forest",kind:"theme",ic:"🌲",name:"Thème Forêt",price:40,theme:"th-forest"},
  {id:"t_volcano",kind:"theme",ic:"🌋",name:"Thème Volcan",price:60,theme:"th-volcano"},
  {id:"t_space",kind:"theme",ic:"🚀",name:"Thème Espace",price:80,theme:"th-space"},
+ {id:"t_ocean",kind:"theme",ic:"🌊",name:"Thème Océan",price:50,theme:"th-ocean"},
+ {id:"t_sakura",kind:"theme",ic:"🌸",name:"Thème Sakura",price:60,theme:"th-sakura"},
+ {id:"t_desert",kind:"theme",ic:"🏜️",name:"Thème Désert",price:50,theme:"th-desert"},
  {id:"ti_1",kind:"title",ic:"🎖️",name:"Apprenti",price:20,title:"Apprenti"},
  {id:"ti_2",kind:"title",ic:"👑",name:"Maître des signes",price:100,title:"Maître des signes"}
 ];
@@ -575,7 +753,12 @@ const BADGES=[
  {id:"b30",ico:"🥇",name:"30 monstres",test:s=>s.kills>=30},
  {id:"boss",ico:"🏆",name:"Boss sans erreur",test:s=>s.bossClean},
  {id:"combo",ico:"🔥",name:"Série de 7",test:s=>s.maxStreak>=7},
- {id:"lvl5",ico:"🚀",name:"Niveau 5",test:s=>s.level>=5}
+ {id:"lvl5",ico:"🚀",name:"Niveau 5",test:s=>s.level>=5},
+ {id:"z1",ico:"🌲",name:"Première zone",test:s=>adventure.completed.length>=1},
+ {id:"z3",ico:"🗺️",name:"Explorateur (3 zones)",test:s=>adventure.completed.length>=3},
+ {id:"zall",ico:"🏰",name:"Conquérant (toutes les zones)",test:s=>adventure.completed.length>=ZONES.length},
+ {id:"zperf",ico:"💎",name:"Zone parfaite (0 vie perdue)",test:s=>!!s.perfectZone&&Number.isInteger(s.adventureZone)&&adventure.completed.includes(s.adventureZone)},
+ {id:"rich",ico:"💰",name:"Fortune (200 pièces)",test:s=>wallet.coins>=200}
 ];
 const getBest=()=>+(localStorage.getItem("rel_best")||0);
 function renderBadgeList(id,only){const o=loadJ("rel_badges",{});const el=$(id);if(!el)return;
@@ -648,7 +831,10 @@ function onTimeout(){
 function floatText(t,c){const f=document.createElement("div");f.className="floating";f.textContent=t;if(c)f.style.color=c;$("mainCard").appendChild(f);setTimeout(()=>f.remove(),1100)}
 function confetti(n=40){const sym=["🎉","⭐","✨","🎊","💥"];for(let i=0;i<n;i++){const c=document.createElement("div");c.className="confetti";c.textContent=pick(sym);c.style.left=rnd(0,100)+"vw";c.style.animationDelay=Math.random()*.8+"s";c.style.animationDuration=1.6+Math.random()*1.4+"s";document.body.appendChild(c);setTimeout(()=>c.remove(),3500)}}
 function loseLife(){
-  game.lives--;game.streak=0;if(isBossTurn())bossNoError=false;updateHud();
+  game.lives--;game.streak=0;if(isBossTurn())bossNoError=false;
+  game.perfectZone=false;
+  updateHud();
+  if(game.lives===1)oneTimeTip("last","Dernière vie ! Prends ton temps, relis les signes.");
   const mo=$("monster");mo.classList.remove("appear");mo.classList.add("shake");setTimeout(()=>mo.classList.remove("shake"),500);sfx("lose");
 }
 function afterWrong(){if(!game)return;if(game.lives<=0){endGame();return}gameNext()}
@@ -662,22 +848,28 @@ function victory(){
   const mo=$("monster");mo.classList.remove("appear");mo.classList.add("hit");
   $("hpfill").style.width="0%";sfx(boss?"boss":"win");if(boss)confetti(60);
   if(game.score>getBest()){localStorage.setItem("rel_best",game.score);$("best").textContent=game.score}
-  checkBadges();game.inLevel++;
+  game.inLevel++;
+  if(game.inLevel<PER_LEVEL)checkBadges();
+  if(game.streak===3)oneTimeTip("combo","Série de 3 : tes points sont doublés !");
+  if(game.kills===1)oneTimeTip("first","Premier monstre vaincu, continue !");
+  if(game.inLevel===PER_LEVEL-1)oneTimeTip("boss","Attention, le prochain est un boss !");
 
   if(game.inLevel>=PER_LEVEL){
     game.inLevel=0;
     if(Number.isInteger(game.adventureZone)){
       const zone=game.adventureZone;
-      adventure.completed.push(zone);
-      adventure.unlocked=Math.min(ZONES.length-1,zone+1);
+      if(!adventure.completed.includes(zone))adventure.completed.push(zone);
+      adventure.unlocked=Math.min(ZONES.length-1,Math.max(adventure.unlocked,zone+1));
       saveAdventure();renderMap();
       const reward=20+zone*10;addCoins(reward);
+      const fresh=checkBadges();
+      const bTxt=fresh.length?"<br>🏅 Nouveau badge : "+fresh.map(id=>{const b=BADGES.find(x=>x.id===id);return b.ico+" "+b.name}).join(", "):"";
       envoyerBilan();
       $("ovLevelTitle").textContent="Zone terminée !";
-      $("ovLevelText").innerHTML=`🎉 ${ZONES[zone].name} est terminée !<br>Récompense : <b>${reward} pièces</b> 🪙`;
+      $("ovLevelText").innerHTML=`🎉 ${ZONES[zone].name} est terminée !<br>Récompense : <b>${reward} pièces</b> 🪙`+bTxt;
       $("levelContinueBtn").textContent="Retour à la carte";
       $("levelContinueBtn").onclick=()=>{closeOv("ovLevel");setMode("train");renderMap()};
-      setTimeout(()=>$("ovLevel").classList.add("on"),700);
+      setTimeout(()=>{sfx("level");confetti(50);$("ovLevel").classList.add("on")},700);
       return;
     }
     game.level++;updateHud();checkBadges();
@@ -822,9 +1014,101 @@ function makePdf(){
   $("printArea").innerHTML=html;setTimeout(()=>window.print(),400);
 }
 
+/* ===== Info-bulles ===== */
+function addTips(){
+  const boxTips={
+    hearts:"Tes vies. Une erreur ou un temps écoulé = −1 ❤️. À 0, c'est Game Over.",
+    score:"Ton score. Les séries de bonnes réponses le multiplient !",
+    coins:"Les pièces gagnées servent à acheter des compagnons et des thèmes.",
+    lvl:"Ton niveau. Il monte chaque fois que tu bats un boss.",
+    mult:"Multiplicateur : ×2 à 3 bonnes réponses d'affilée, ×3 à 5.",
+    best:"Ton record de points."
+  };
+  Object.keys(boxTips).forEach(id=>{
+    const el=$(id);if(!el)return;
+    const b=el.classList.contains("box")?el:el.closest(".box");
+    if(b)b.setAttribute("data-tip",boxTips[id]);
+  });
+  $("btnHint").setAttribute("data-tip","Affiche la première étape de la méthode, pour −5 points.");
+  $("soundBtn").setAttribute("data-tip","Active ou coupe les sons.");
+  document.addEventListener("touchstart",e=>{
+    const t=e.target.closest("[data-tip]");
+    document.querySelectorAll(".tip-on").forEach(x=>x.classList.remove("tip-on"));
+    if(t){t._tt=setTimeout(()=>t.classList.add("tip-on"),450)}
+  },{passive:true});
+  document.addEventListener("touchend",()=>{
+    document.querySelectorAll("[data-tip]").forEach(t=>clearTimeout(t._tt));
+    setTimeout(()=>document.querySelectorAll(".tip-on").forEach(x=>x.classList.remove("tip-on")),2200);
+  });
+}
+
+/* ===== Tutoriel guidé ===== */
+const TUTO=[
+  {sel:null,t:"Bienvenue chasseur ! 👾",x:"Je vais te montrer comment jouer en quelques étapes. Tu peux passer à tout moment."},
+  {sel:"#exercise",t:"Le calcul",x:"Voici le calcul à résoudre. Le résultat est toujours un nombre entier relatif (positif ou négatif)."},
+  {sel:"#pad",t:"Le pavé numérique",x:"Tape ta réponse ici. La touche +/− change le signe. Tu peux aussi utiliser le clavier de l'ordinateur."},
+  {sel:".arena",t:"Le monstre",x:"Chaque bonne réponse bat un monstre. Un boss costaud arrive tous les 5 monstres !"},
+  {sel:"#btnHint",t:"L'indice",x:"Bloqué ? L'indice t'aide mais coûte 5 points. Disponible en partie solo et en duel."},
+  {sel:".topline .gold",t:"Les modes de jeu",x:"Partie solo pour battre ton record, Duel à deux sur la même tablette, Entraînement pour réviser sans pression."},
+  {sel:"#mapCard",t:"La carte d'aventure",x:"Termine une zone pour débloquer la suivante. Tes résultats sont envoyés à ton professeur."},
+  {sel:"#shopFold",t:"La boutique",x:"Avec tes pièces, achète un compagnon qui évolue quand tu gagnes, ou un thème (Espace, Forêt, Volcan, Océan, Sakura, Désert)."},
+  {sel:"#courseFold",t:"Le rappel de cours",x:"Un doute sur une règle de signe ? Tout est résumé ici."},
+  {sel:null,t:"À toi de jouer ! 🚀",x:"Lance une partie solo ou l'aventure. Bonne chasse !"}
+];
+let tutoI=0,tutoEl=null;
+function tutoStart(force){
+  if(!force&&localStorage.getItem("rel_tuto_done"))return;
+  if(mode==="game"||mode==="duel")setMode("train");
+  tutoI=0;$("tutoDim").classList.add("on");tutoShow();
+}
+function tutoShow(){
+  if(tutoEl){tutoEl.classList.remove("tuto-hl");tutoEl=null}
+  const s=TUTO[tutoI];
+  $("tbTitle").textContent=s.t;$("tbText").textContent=s.x;
+  $("tbStep").textContent=(tutoI+1)+" / "+TUTO.length;
+  $("tbNext").textContent=tutoI===TUTO.length-1?"Terminer ✅":"Suivant ➜";
+  const b=$("tutoBubble");b.classList.remove("on");void b.offsetWidth;b.classList.add("on");
+  if(s.sel){
+    const el=document.querySelector(s.sel);
+    if(el){
+      if(el.tagName==="DETAILS")el.open=true;
+      tutoEl=el;el.classList.add("tuto-hl");
+      el.scrollIntoView({behavior:"smooth",block:"center"});
+      setTimeout(()=>{
+        const r=el.getBoundingClientRect(),bh=b.offsetHeight,bw=b.offsetWidth;
+        let top=r.bottom+14;
+        if(top+bh>window.innerHeight-10)top=Math.max(10,r.top-bh-14);
+        let left=Math.min(Math.max(10,r.left+r.width/2-bw/2),window.innerWidth-bw-10);
+        b.style.top=top+"px";b.style.left=left+"px";
+      },450);
+      return;
+    }
+  }
+  b.style.top=Math.max(20,(window.innerHeight-b.offsetHeight)/2)+"px";
+  b.style.left=Math.max(10,(window.innerWidth-b.offsetWidth)/2)+"px";
+}
+function tutoNext(){
+  if(tutoI>=TUTO.length-1){tutoEnd();return}
+  tutoI++;tutoShow();
+}
+function tutoEnd(){
+  if(tutoEl){tutoEl.classList.remove("tuto-hl");tutoEl=null}
+  $("tutoDim").classList.remove("on");$("tutoBubble").classList.remove("on");
+  localStorage.setItem("rel_tuto_done","1");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ===== Conseils contextuels ===== */
+const SEEN=loadJ("rel_seen",{});
+function oneTimeTip(key,msg){
+  if(SEEN[key]||document.querySelector(".overlay.on")||$("tutoDim").classList.contains("on"))return;
+  SEEN[key]=1;saveJ("rel_seen",SEEN);floatText("💡 "+msg,"#7c3aed");
+}
+
 /* ===== Événements ===== */
 document.addEventListener("keydown",e=>{
   if(document.querySelector(".overlay.on"))return;
+  if($("tutoDim").classList.contains("on"))return;
   const tag=document.activeElement.tagName;
   if(tag==="SELECT"||(tag==="INPUT"&&document.activeElement.type!=="text"))return;
   if(e.key==="Enter"){
@@ -851,10 +1135,11 @@ window.addEventListener("load",()=>{
   soundOn=localStorage.getItem("rel_sound")!=="0";
   $("soundBtn").textContent=soundOn?"🔊":"🔇";
   $("best").textContent=getBest();
-  applyTheme();applyPad();updateCoins();renderShop();renderCompanion();renderStats();renderBadgeList("badgeList");
-  renderMap();
-  if(!localStorage.getItem("codeEleve"))$("ovId").classList.add("on");
+    applyTheme();applyPad();updateCoins();renderShop();renderCompanion();renderStats();renderBadgeList("badgeList");
+  renderMap();addTips();
   setMode("train");
+  if(!localStorage.getItem("codeEleve"))$("ovId").classList.add("on");
+  else tutoStart();
 });
 </script>
 </body>
