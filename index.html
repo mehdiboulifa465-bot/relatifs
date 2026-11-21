@@ -35,7 +35,7 @@ label{font-size:14px}
 .hud{display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap}
 .hud .box{background:var(--soft);border-radius:10px;padding:5px 10px;font-weight:700;color:var(--accent2);font-size:14px;white-space:nowrap}
 .topline{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-.arena{text-align:center;padding:2px 0 8px;border-bottom:2px dashed var(--soft);margin-bottom:8px}
+.arena{position:relative;text-align:center;padding:2px 0 8px;border-bottom:2px dashed var(--soft);margin-bottom:8px}
 .monster{font-size:72px;line-height:1.1;display:inline-block;user-select:none}
 .monster.boss{font-size:92px;filter:drop-shadow(0 0 12px #f59e0b);animation:pulse 1.2s infinite}
 .monster.hit{animation:boom .6s forwards}.monster.shake{animation:shake .45s}.monster.appear{animation:pop .35s}
@@ -49,7 +49,7 @@ label{font-size:14px}
 @keyframes boom{0%{transform:scale(1)}40%{transform:scale(1.5) rotate(15deg)}100%{transform:scale(0) rotate(180deg);opacity:0}}
 @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
-.floating{position:absolute;left:50%;top:30px;transform:translateX(-50%);font-size:26px;font-weight:800;color:#059669;pointer-events:none;animation:floatup 1.1s forwards;text-shadow:0 2px 0 #fff}
+.floating{position:absolute;left:50%;top:30px;transform:translateX(-50%);font-size:26px;font-weight:800;color:#059669;pointer-events:none;animation:floatup 1.1s forwards;text-shadow:0 2px 0 #fff;white-space:nowrap;z-index:5}
 @keyframes floatup{0%{opacity:1}100%{opacity:0;transform:translate(-50%,-60px)}}
 .overlay{position:fixed;inset:0;background:rgba(15,10,60,.88);display:none;align-items:center;justify-content:center;z-index:50;padding:14px;overflow-y:auto}
 .overlay.on{display:flex}
@@ -92,6 +92,16 @@ details.fold .inner{margin-top:12px}
 .zone.locked{opacity:.55}
 .zone .icon{font-size:34px}
 .zone button{margin-top:8px}
+/* Compagnon évolutif */
+.companion{position:absolute;left:8px;bottom:6px;text-align:center;line-height:1;min-width:60px}
+.companion .cico{display:inline-block;transition:font-size .3s;animation:bob 2s ease-in-out infinite}
+.companion .cacc{font-size:16px;display:block;min-height:18px}
+.companion .cname{font-size:11px;font-weight:700;color:var(--accent2)}
+.companion .cxp{width:56px;height:6px;background:#e5e7eb;border-radius:6px;margin:3px auto 0;overflow:hidden}
+.companion .cxpf{height:100%;width:0;background:#8b5cf6;transition:width .4s}
+.companion.evolve .cico{animation:evolve 1.2s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes evolve{0%{transform:scale(1)}30%{transform:scale(1.8) rotate(-15deg);filter:brightness(2)}60%{transform:scale(.8) rotate(15deg)}100%{transform:scale(1)}}
 #printArea{display:none}
 @media print{body{background:#fff;padding:0}.container,.overlay,.confetti{display:none!important}#printArea{display:block}.pagebreak{page-break-before:always}.pitem{margin:22px 0;font-size:20px}.psol{margin:12px 0;font-size:15px}.pline{display:inline-block;width:120px;border-bottom:1px solid #000;margin-left:12px}}
 </style>
@@ -149,6 +159,7 @@ details.fold .inner{margin-top:12px}
 
 <div class="card" id="mainCard">
   <div class="arena">
+    <div class="companion" id="companion"></div>
     <div class="monster" id="monster">👾</div>
     <div class="mname" id="mname"></div>
     <div class="hpbar" id="hpbar"><div class="hpfill" id="hpfill"></div></div>
@@ -228,7 +239,7 @@ details.fold .inner{margin-top:12px}
 
 <div class="overlay" id="ovStart"><div class="modal">
   <div class="big">🐉</div><h2>Prêt à chasser ?</h2>
-  <p>Résous les calculs pour vaincre les monstres. Tu as <b>3 ❤️</b>. Un <b>boss</b> t'attend tous les 5 monstres. Chaque victoire rapporte des <b>🪙</b> pour la boutique.</p>
+  <p>Résous les calculs pour vaincre les monstres. Tu as <b>3 ❤️</b>. Un <b>boss</b> t'attend tous les 5 monstres. Chaque victoire rapporte des <b>🪙</b> pour la boutique et de l'<b>XP</b> pour ton compagnon.</p>
   <button class="gold" onclick="startGame()">⚔️ C'est parti !</button>
   <button class="secondary" onclick="closeOv('ovStart')">Plus tard</button>
 </div></div>
@@ -250,6 +261,16 @@ details.fold .inner{margin-top:12px}
   <button class="gold" onclick="closeOv('ovPass');duelShow()">Je suis prêt</button>
 </div></div>
 
+<div class="overlay" id="ovId"><div class="modal">
+  <div class="big">🧑‍🎓</div><h2>Qui joue ?</h2>
+  <p>Entre ton code (donné par ton professeur) et ta classe.</p>
+  <div class="row" style="margin:10px 0">
+    <input type="text" id="inCode" placeholder="Code élève" maxlength="20" style="width:160px">
+    <input type="text" id="inClasse" placeholder="Classe (ex : 5A)" maxlength="10" style="width:140px">
+  </div>
+  <button class="gold" onclick="saveId()">✅ Valider</button>
+</div></div>
+
 <div id="printArea"></div>
 
 <script>
@@ -259,17 +280,58 @@ const $=id=>document.getElementById(id);
 const rnd=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 const pick=a=>a[rnd(0,a.length-1)];
 const MINUS="−";
-const fmt=n=>n<0?MINUS+Math.abs(n):""+n;                 
-const par=n=>n<0?`(${MINUS}${Math.abs(n)})`:`(+${n})`;    
-const parNeg=n=>n<0?`(${MINUS}${Math.abs(n)})`:`${n}`;    
+const fmt=n=>n<0?MINUS+Math.abs(n):""+n;
+const par=n=>n<0?`(${MINUS}${Math.abs(n)})`:`(+${n})`;
+const parNeg=n=>n<0?`(${MINUS}${Math.abs(n)})`:`${n}`;
 function maxVal(l){return l===1?9:l===2?20:50}
 function maxMul(l){return l===1?6:l===2?10:12}
 function rv(l){let v=rnd(1,maxVal(l));return Math.random()<.5?-v:v}
 function rm(l){let v=rnd(2,maxMul(l));return Math.random()<.5?-v:v}
 function effLevel(){
   const base=+$("level").value;
-  if(mode==="game"&&$("autoLevel").checked)return Math.min(3,Math.max(base,game.level<=1?1:game.level<=3?2:3));
+  if(mode==="game"&&game&&$("autoLevel").checked)return Math.min(3,Math.max(base,game.level<=1?1:game.level<=3?2:3));
   return base;
+}
+
+/* ================= Envoi des résultats ================= */
+function envoyerResultats(score, monstres, taux, detail) {
+  var donnees = {
+    code: localStorage.getItem('codeEleve') || '',
+    classe: localStorage.getItem('classeEleve') || '',
+    score: score,
+    monstres: monstres,
+    taux: taux,
+    detail: detail
+  };
+  fetch('https://script.google.com/macros/s/AKfycbwLl6y5rnVXvA8pjQebzLWeJZBxdODiriVuJuByJOuURkktshegv0SRCLBASU5m3Wp2/exec', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(donnees)
+  }).catch(function (err) { console.log('Envoi échoué', err); });
+}
+function saveId(){
+  const c=$("inCode").value.trim(), k=$("inClasse").value.trim();
+  if(!c||!k){alert("Merci de remplir le code et la classe.");return}
+  localStorage.setItem("codeEleve",c);
+  localStorage.setItem("classeEleve",k);
+  closeOv("ovId");
+}
+function envoyerBilan(){
+  if(!game)return;
+  const ps=window.partieStats||{};
+  let ok=0,n=0;
+  let detail=Object.keys(ps).map(id=>{
+    const t=TYPES.find(x=>x.id===id);
+    ok+=ps[id].ok;n+=ps[id].n;
+    return (t?t.name:id)+": "+ps[id].ok+"/"+ps[id].n;
+  }).join(" | ");
+  const ci=compItem();
+  if(ci){
+    const xp=comp.xp[ci.id]||0;
+    detail+=" | Compagnon: "+ci.name+" ("+STAGES[stageOf(xp)].name+", "+xp+" XP)";
+  }
+  const taux=n?Math.round(ok/n*100)+"%":"0%";
+  envoyerResultats(game.score,game.kills,taux,detail);
 }
 
 /* ================= Carte d'aventure ================= */
@@ -291,11 +353,13 @@ function renderMap(){
     </div>`;
   }).join("");
 }
-function startAdventure(zoneIndex=adventure.unlocked){
+function startAdventure(zoneIndex){
+  if(zoneIndex===undefined)zoneIndex=adventure.unlocked;
   if(zoneIndex>adventure.unlocked||adventure.completed.includes(zoneIndex))return;
   $("category").value=ZONES[zoneIndex].category;
-  game={lives:3,score:0,level:1,inLevel:0,kills:0,streak:0,maxStreak:0,mult:1,bossClean:false,adventureZone:zoneIndex};
   setMode("game");
+  game={lives:3,score:0,level:1,inLevel:0,kills:0,streak:0,maxStreak:0,mult:1,bossClean:false,adventureZone:zoneIndex};
+  window.partieStats={};
   $("hudCard").style.display="block";
   $("best").textContent=getBest();
   renderBadgeList("badgeList");
@@ -313,7 +377,7 @@ const TYPES=[
 {id:"add_diff",name:"Addition (signes différents)",cat:["add","addsub"],gen(l){
   let a=rnd(1,maxVal(l)),b=rnd(1,maxVal(l));while(a===b)b=rnd(1,maxVal(l));
   if(Math.random()<.5)a=-a;else b=-b; if(Math.random()<.5){[a,b]=[b,a]}
-  const r=a+b;const big=Math.abs(a)>Math.abs(b)?a:b;
+  const r=a+b;
   return{latex:`${par(a)} + ${par(b)}`,res:r,steps:[
    ["Signes <b>différents</b> : on soustrait les distances à zéro et on garde le signe du nombre le plus grand.",null],
    [null,`${par(a)} + ${par(b)} = ${fmt(r)}`]]}}},
@@ -367,7 +431,7 @@ const TYPES=[
 {id:"par_div",name:"Division avec parenthèses",cat:["parent","div","chaine"],gen(l){
   const d=rm(Math.min(l,2)),q=rm(Math.min(l,2)),sum=d*q,a=rv(l),b=sum-a;
   return{latex:`(${fmt(a)} + (${fmt(b)})) ÷ ${parNeg(d)}`,res:q,steps:[
-    ["Parenthèses d'abord :",null],[null,`${sum} ÷ ${parNeg(d)} = ${fmt(q)}`]]}}},
+    ["Parenthèses d'abord :",null],[null,`${fmt(sum)} ÷ ${parNeg(d)} = ${fmt(q)}`]]}}},
 {id:"problem",name:"Problèmes",cat:["probleme"],gen(l){
   const t=rnd(1,10),d=rnd(t+1,t+15);
   return{statement:`Il fait ${t} °C à midi. La température baisse de ${d} °C pendant la nuit. Quelle est la température finale ?`,latex:`${t} − ${d}`,res:t-d,
@@ -379,8 +443,16 @@ const BOSS_TYPES=["prio1","prio2","par_mul","par_div","mul3","addsub_chain","sup
 function loadJ(k,def){try{const v=JSON.parse(localStorage.getItem(k));return v??def}catch(e){return def}}
 function saveJ(k,v){localStorage.setItem(k,JSON.stringify(v))}
 let stats=loadJ("rel_stats",{});
-function recStat(id,ok,secs){const s=stats[id]||(stats[id]={ok:0,ko:0,t:0,recent:[]});
-  if(ok)s.ok++;else s.ko++;s.t+=secs;s.recent.push(ok?1:0);if(s.recent.length>10)s.recent.shift();saveJ("rel_stats",stats)}
+function recStat(id,ok,secs){
+  if(window.partieStats){
+    const p=window.partieStats[id]||(window.partieStats[id]={ok:0,n:0});
+    p.n++;if(ok)p.ok++;
+  }
+  const s=stats[id]||(stats[id]={ok:0,ko:0,t:0,recent:[]});
+  if(ok)s.ok++;else s.ko++;
+  s.t+=secs;s.recent.push(ok?1:0);if(s.recent.length>10)s.recent.shift();
+  saveJ("rel_stats",stats);
+}
 function weight(id){const s=stats[id];if(!s||!s.recent.length)return 3;return 1+Math.round(s.recent.filter(x=>x===0).length/s.recent.length*8)}
 function renderStats(){
   const rows=TYPES.map(t=>{const s=stats[t.id];const n=s?s.ok+s.ko:0;const pct=n?Math.round(s.ok/n*100):0;const avg=n?Math.round(s.t/n):0;
@@ -388,7 +460,7 @@ function renderStats(){
     return`<div class="srow"><div class="nm">${t.name}</div><div class="pb"><div class="pf" style="width:${n?pct:0}%;background:${col}"></div></div><div class="pv">${n?pct+"% · "+n+" · "+avg+"s":"—"}</div></div>`}).join("");
   $("statsBox").innerHTML=rows+"<p style='color:#6b7280;font-size:13px;margin-top:8px'>Réussite · nombre · temps moyen par exercice.</p>";
 }
-function resetAll(){if(confirm("Effacer statistiques, pièces, boutique et badges ?")){["rel_stats","rel_wallet","rel_badges","rel_best","rel_adventure"].forEach(k=>localStorage.removeItem(k));location.reload()}}
+function resetAll(){if(confirm("Effacer statistiques, pièces, boutique, badges et compagnons ?")){["rel_stats","rel_wallet","rel_badges","rel_best","rel_adventure","rel_comp"].forEach(k=>localStorage.removeItem(k));location.reload()}}
 
 function activeTypes(){const c=$("category").value;return c==="all"?TYPES.filter(t=>t.id!=="problem"):TYPES.filter(t=>t.cat.includes(c))}
 function generateExercise(level,boss){
@@ -416,17 +488,52 @@ function saveWallet(){saveJ("rel_wallet",wallet)}
 function applyTheme(){document.body.className="";if(wallet.theme){const it=SHOP.find(s=>s.id===wallet.theme);if(it)document.body.classList.add(it.theme)}}
 function updateCoins(){$("coins").textContent=wallet.coins;$("coins2").textContent=wallet.coins}
 function renderShop(){
-  const kinds=[["skin","Monstres"],["theme","Thèmes"],["title","Titres"]];
+  const kinds=[["skin","Compagnons (évoluent avec toi !)"],["theme","Thèmes"],["title","Titres"]];
   $("shopBox").innerHTML=(wallet.title?`<p>Titre actuel : <b>${SHOP.find(s=>s.id===wallet.title).title}</b></p>`:"")+kinds.map(([k,lab])=>
   `<b>${lab}</b><div class="shop">`+SHOP.filter(s=>s.kind===k).map(s=>{
     const owned=wallet.owned[s.id];const eq=wallet[k]===s.id;
-    return `<div class="item ${eq?"eq":""}"><div class="ic">${s.ic}</div>${s.name}<br>`+
+    const xpTxt=(k==="skin"&&owned)?`<br><small>${(comp.xp[s.id]||0)} XP · ${STAGES[stageOf(comp.xp[s.id]||0)].name}</small>`:"";
+    return `<div class="item ${eq?"eq":""}"><div class="ic">${s.ic}</div>${s.name}${xpTxt}<br>`+
     (owned?`<button class="${eq?"secondary":""}" onclick="equip('${s.id}')">${eq?"Retirer":"Équiper"}</button>`:`<button ${wallet.coins<s.price?"disabled":""} onclick="buy('${s.id}')">🪙 ${s.price}</button>`)+`</div>`}).join("")+`</div>`).join("");
 }
 function titleName(){const it=wallet.title&&SHOP.find(s=>s.id===wallet.title);return it?it.title:""}
-function buy(id){const s=SHOP.find(x=>x.id===id);if(!s||wallet.owned[id]||wallet.coins<s.price)return;wallet.coins-=s.price;wallet.owned[id]=true;wallet[s.kind]=id;saveWallet();applyTheme();updateCoins();renderShop();sfx("level")}
-function equip(id){const s=SHOP.find(x=>x.id===id);if(!s||!wallet.owned[id])return;wallet[s.kind]=(wallet[s.kind]===id)?null:id;saveWallet();applyTheme();renderShop()}
+function buy(id){const s=SHOP.find(x=>x.id===id);if(!s||wallet.owned[id]||wallet.coins<s.price)return;wallet.coins-=s.price;wallet.owned[id]=true;wallet[s.kind]=id;saveWallet();applyTheme();updateCoins();renderShop();renderCompanion();sfx("level")}
+function equip(id){const s=SHOP.find(x=>x.id===id);if(!s||!wallet.owned[id])return;wallet[s.kind]=(wallet[s.kind]===id)?null:id;saveWallet();applyTheme();renderShop();renderCompanion()}
 function addCoins(n){wallet.coins+=n;saveWallet();updateCoins();renderShop()}
+
+/* ================= Compagnon évolutif ================= */
+const STAGES=[
+  {name:"Bébé",xp:0,size:34,acc:""},
+  {name:"Jeune",xp:15,size:46,acc:"⭐"},
+  {name:"Adulte",xp:40,size:58,acc:"👑"},
+  {name:"Légendaire",xp:80,size:70,acc:"✨👑✨"}
+];
+let comp=loadJ("rel_comp",{xp:{}});
+function saveComp(){saveJ("rel_comp",comp)}
+function compItem(){return wallet.skin?SHOP.find(s=>s.id===wallet.skin):null}
+function stageOf(xp){let s=0;STAGES.forEach((st,i)=>{if(xp>=st.xp)s=i});return s}
+function renderCompanion(evolved){
+  const el=$("companion");if(!el)return;
+  const it=compItem();
+  if(!it){el.innerHTML="";return}
+  const xp=comp.xp[it.id]||0;const si=stageOf(xp);const st=STAGES[si];
+  const next=STAGES[si+1];
+  const pct=next?Math.round((xp-st.xp)/(next.xp-st.xp)*100):100;
+  el.innerHTML=`<span class="cacc">${st.acc}</span><span class="cico" style="font-size:${st.size}px">${it.ic}</span><div class="cname">${st.name} · ${xp} XP</div><div class="cxp"><div class="cxpf" style="width:${pct}%"></div></div>`;
+  if(evolved){el.classList.remove("evolve");void el.offsetWidth;el.classList.add("evolve")}
+}
+function addCompXP(n){
+  const it=compItem();if(!it)return;
+  const before=stageOf(comp.xp[it.id]||0);
+  comp.xp[it.id]=(comp.xp[it.id]||0)+n;saveComp();
+  const after=stageOf(comp.xp[it.id]);
+  renderCompanion(after>before);
+  renderShop();
+  if(after>before){
+    sfx("level");confetti(30);
+    floatText("🎉 "+it.name+" évolue : "+STAGES[after].name+" !","#8b5cf6");
+  }
+}
 
 /* ================= Sons ================= */
 let soundOn=true,actx=null;
@@ -495,8 +602,10 @@ function setMode(m){
 function isBossTurn(){return mode==="game"&&game&&game.inLevel===PER_LEVEL-1}
 function startGame(){
   closeOv("ovStart");
+  setMode("game");
   game={lives:3,score:0,level:1,inLevel:0,kills:0,streak:0,maxStreak:0,mult:1,bossClean:false};
-  setMode("game");$("hudCard").style.display="block";
+  window.partieStats={};
+  $("hudCard").style.display="block";
   $("best").textContent=getBest();renderBadgeList("badgeList");updateHud();gameNext();
 }
 function updateHud(){
@@ -548,13 +657,13 @@ function victory(){
   const boss=isBossTurn();const gain=Math.max(1,(boss?50:10)*game.mult-hintPenalty);
   game.score+=gain;game.kills++;game.streak++;game.maxStreak=Math.max(game.maxStreak,game.streak);
   if(boss&&bossNoError)game.bossClean=true;
-  const coin=boss?10:2;addCoins(coin);updateHud();
+  const coin=boss?10:2;addCoins(coin);addCompXP(boss?5:1);updateHud();
   floatText(`+${gain} ⭐  +${coin} 🪙`);
   const mo=$("monster");mo.classList.remove("appear");mo.classList.add("hit");
   $("hpfill").style.width="0%";sfx(boss?"boss":"win");if(boss)confetti(60);
   if(game.score>getBest()){localStorage.setItem("rel_best",game.score);$("best").textContent=game.score}
   checkBadges();game.inLevel++;
-  
+
   if(game.inLevel>=PER_LEVEL){
     game.inLevel=0;
     if(Number.isInteger(game.adventureZone)){
@@ -563,6 +672,7 @@ function victory(){
       adventure.unlocked=Math.min(ZONES.length-1,zone+1);
       saveAdventure();renderMap();
       const reward=20+zone*10;addCoins(reward);
+      envoyerBilan();
       $("ovLevelTitle").textContent="Zone terminée !";
       $("ovLevelText").innerHTML=`🎉 ${ZONES[zone].name} est terminée !<br>Récompense : <b>${reward} pièces</b> 🪙`;
       $("levelContinueBtn").textContent="Retour à la carte";
@@ -582,6 +692,7 @@ function victory(){
 }
 
 function endGame(){
+  envoyerBilan();
   clearInterval(gameTimerId);sfx("over");const best=getBest();const fresh=checkBadges();
   $("endIcon").textContent="💀";$("endTitle").textContent="Game Over";
   $("endText").innerHTML=`Score : <b>${game.score}</b> ⭐<br>Monstres vaincus : <b>${game.kills}</b><br>Meilleure série : <b>${game.maxStreak}</b> 🔥<br>Record : <b>${Math.max(best,game.score)}</b> 🏆`+(game.score>=best&&game.score>0?"<br>🎉 Nouveau record !":"");
@@ -592,8 +703,8 @@ function endGame(){
 /* ===== Duel ===== */
 let duel=null;
 function startDuel(){
-  duel={p:0,pts:[0,0],round:0,rounds:10};
   setMode("duel");
+  duel={p:0,pts:[0,0],round:0,rounds:10};
   $("pts1").textContent=0;$("pts2").textContent=0;
   duelPass();
 }
@@ -740,8 +851,9 @@ window.addEventListener("load",()=>{
   soundOn=localStorage.getItem("rel_sound")!=="0";
   $("soundBtn").textContent=soundOn?"🔊":"🔇";
   $("best").textContent=getBest();
-  applyTheme();applyPad();updateCoins();renderShop();renderStats();renderBadgeList("badgeList");
+  applyTheme();applyPad();updateCoins();renderShop();renderCompanion();renderStats();renderBadgeList("badgeList");
   renderMap();
+  if(!localStorage.getItem("codeEleve"))$("ovId").classList.add("on");
   setMode("train");
 });
 </script>
